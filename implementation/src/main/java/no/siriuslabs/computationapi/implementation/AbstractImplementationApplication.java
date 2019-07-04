@@ -60,7 +60,8 @@ public abstract class AbstractImplementationApplication {
 		LOGGER.info("Node's domain is {}", node.getDomainType());
 
 		InetAddress inetAddress = InetAddress.getLocalHost();
-		final String ipAndPort = inetAddress.getHostAddress() + ':' + serverPort;
+		final String hostAdressPart = inetAddress.getHostName() == null || inetAddress.getHostName().trim().isEmpty() ? inetAddress.getHostAddress() : inetAddress.getHostName();
+		final String ipAndPort = hostAdressPart + ':' + serverPort;
 		node.setId(ipAndPort);
 		LOGGER.info("Node's IP:port combination is {}", ipAndPort);
 

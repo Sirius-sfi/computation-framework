@@ -56,7 +56,7 @@ public class AbstractImplementationApplicationTest {
 		assertAll(() -> { result[0] = application.configureWorkerNode(); });
 
 		assertNotNull(result[0], "configureWorkerNode() is expected to return a non-null value");
-		assertTrue(result[0].getId().contains(InetAddress.getLocalHost().getHostAddress()), "Node's ID is expected to contain host's IP address");
+		assertTrue(result[0].getId().contains(InetAddress.getLocalHost().getHostAddress()) || result[0].getId().contains(InetAddress.getLocalHost().getHostName()), "Node's ID is expected to contain host's IP address or host name");
 		assertEquals(DomainType.DEMO, result[0].getDomainType(), "Node's domain type must be as configured above");
 	}
 
