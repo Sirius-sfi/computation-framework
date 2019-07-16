@@ -67,7 +67,7 @@ public class AbstractImplementationApplicationTest {
 
 		Controller controller = new Controller();
 		try {
-			controller.setUrl(new URI(urlString));
+			controller.setLocalUrl(new URI(urlString));
 
 			Mockito.when(configProperties.getController()).thenReturn(controller);
 

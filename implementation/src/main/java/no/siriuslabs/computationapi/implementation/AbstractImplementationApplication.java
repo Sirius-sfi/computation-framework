@@ -71,12 +71,23 @@ public abstract class AbstractImplementationApplication {
 	}
 
 	protected URI createServiceUri() throws URISyntaxException {
-		final URI controllerUrl = configProperties.getController().getUrl();
+		final URI controllerUrl;
+		if(isDockerActive()) {
+			controllerUrl = configProperties.getController().getDockerUrl();
+		}
+		else {
+			controllerUrl = configProperties.getController().getLocalUrl();
+		}
 		LOGGER.info("Controller's URL is {}", controllerUrl);
 		final String serviceUrl = controllerUrl + REGISTER_NODE_SERVICE_PATH;
 		LOGGER.info("Service URL to be called is {}", serviceUrl);
 
 		return new URI(serviceUrl);
+	}
+
+	private boolean isDockerActive() {
+		String dockerFlag = System.getProperties().getProperty("docker");
+		return dockerFlag == null || dockerFlag.trim().isEmpty() ? false : Boolean.parseBoolean(dockerFlag);
 	}
 
 	protected boolean register(WorkerNode node, URI uri) {

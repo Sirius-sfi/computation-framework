@@ -4,17 +4,26 @@ import java.net.URI;
 
 public class Controller {
 
-	private URI url;
+	private URI localUrl;
+	private URI dockerUrl;
 	private int retryCount;
 	private long retryDelay;
 	private Timer timer;
 
-	public URI getUrl() {
-		return url;
+	public URI getLocalUrl() {
+		return localUrl;
 	}
 
-	public void setUrl(URI url) {
-		this.url = url;
+	public void setLocalUrl(URI localUrl) {
+		this.localUrl = localUrl;
+	}
+
+	public URI getDockerUrl() {
+		return dockerUrl;
+	}
+
+	public void setDockerUrl(URI dockerUrl) {
+		this.dockerUrl = dockerUrl;
 	}
 
 	public int getRetryCount() {
