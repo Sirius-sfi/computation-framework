@@ -9,7 +9,7 @@ import no.siriuslabs.computationapi.event.ComputationRequestAddedEvent;
 import no.siriuslabs.computationapi.event.DataPreparartionFinishedEvent;
 import no.siriuslabs.computationapi.event.AbstractDataWorkflowEvent;
 import no.siriuslabs.computationapi.event.ResultUpdateEvent;
-import no.siriuslabs.computationapi.model.RequestProtocol;
+import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;

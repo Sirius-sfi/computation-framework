@@ -1,8 +1,5 @@
-package no.siriuslabs.computationapi.model;
+package no.siriuslabs.computationapi.api.model.computation;
 
-import no.siriuslabs.computationapi.api.model.computation.DomainType;
-import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
-import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
 import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
 
 import java.util.ArrayList;
