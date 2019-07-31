@@ -3,20 +3,30 @@ package no.siriuslabs.computationapi.controller;
 import no.siriuslabs.computationapi.api.model.computation.ComputationResult;
 import no.siriuslabs.computationapi.api.model.computation.ComputationStatus;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
+import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
 import no.siriuslabs.computationapi.api.model.computation.Status;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
+import no.siriuslabs.computationapi.config.ControllerProperties;
+import no.siriuslabs.computationapi.event.AbstractDataWorkflowEvent;
 import no.siriuslabs.computationapi.event.ComputationRequestAddedEvent;
 import no.siriuslabs.computationapi.event.DataPreparartionFinishedEvent;
-import no.siriuslabs.computationapi.event.AbstractDataWorkflowEvent;
 import no.siriuslabs.computationapi.event.ResultUpdateEvent;
-import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
+import no.siriuslabs.computationapi.service.NodeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +36,20 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
 
+	private static final String ACCUMULATE_RESULTS_PATH = "/accumulateResults";
+
+	private final NodeRegistry nodeRegistry;
+	private final ControllerProperties controllerProperties;
+	private final RestTemplate restTemplate;
+
 	private Map<DomainType, RequestProtocol> protocolMap = new ConcurrentHashMap<>();
+
+	@Autowired
+	public ResultController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties, RestTemplate restTemplate) {
+		this.nodeRegistry = nodeRegistry;
+		this.controllerProperties = controllerProperties;
+		this.restTemplate = restTemplate;
+	}
 
 	@Override
 	public void onApplicationEvent(AbstractDataWorkflowEvent workflowEvent) {
@@ -109,19 +132,94 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 	}
 
 	@GetMapping("/result/{domain}")
-	public ComputationResult getResult(@PathVariable("domain") String domain) {
+	public ResponseEntity<Object> getResult(@PathVariable("domain") String domain) throws URISyntaxException {
 		final String methodName = "getResult";
 		ControllerHelper.logRequestStart(LOGGER, methodName, domain);
 
 		ControllerHelper.checkParameter(domain);
 		DomainType domainType = ControllerHelper.getDomainTypeFromParameter(domain);
 
-		// TODO if computation finished get result data and transform
-		// TODO call node with result accumulation request to make one result from WP results
-		// TODO return real data and remove protocol
-		final ComputationResult result = new ComputationResult(Status.FAILED, "NYI");
+		ComputationStatus status = getStatus(domain);
+		LOGGER.info("Computation status is {}", status);
+		if(Status.DONE != status.getStatus() && Status.FAILED != status.getStatus()) {
+			final ComputationResult result = new ComputationResult(status.getStatus(), "Computation not done yet");
+
+			ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+			return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(result);
+		}
+
+		RequestProtocol protocol = protocolMap.get(domainType);
+		if(protocol == null || protocol.getWorkPackageResults() == null || protocol.getWorkPackageResults().isEmpty()) {
+			final ComputationResult result = new ComputationResult(status.getStatus(), "No results found");
+
+			ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+			return ResponseEntity.status(HttpStatus.OK).body(result);
+		}
+		LOGGER.info("Protocol for domain {} contains {} results", domainType, protocol.getWorkPackageResults().size());
+
+		String nodeId = reserveNode();
+		if(nodeId == null) {
+			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No free nodes found after max number of retries");
+			ControllerHelper.logRequestFinish(LOGGER, methodName, response, domain);
+			return response;
+		}
+
+		URI nodeUri = nodeRegistry.getUriForNode(nodeId);
+		URI uri = new URI(nodeUri + ACCUMULATE_RESULTS_PATH);
+		LOGGER.info("Node-URI to be called: {}", uri);
+		HttpEntity<RequestProtocol> entity = (HttpEntity<RequestProtocol>) ControllerHelper.createHttpEntity(protocol);
+
+		nodeRegistry.occupyNode(nodeId);
+		ResponseEntity<ComputationResult> response = restTemplate.exchange(uri, HttpMethod.POST, entity, ComputationResult.class);
+
+		ComputationResult result = response.getBody();
+		LOGGER.info("Computation result received: {}", result);
+		if(HttpStatus.OK == response.getStatusCode()) {
+			LOGGER.info("Removing protocol from domain {} from result store", domainType);
+			protocolMap.remove(domainType);
+		}
+
+		nodeRegistry.freeNode(nodeId);
 
 		ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
-		return result;
+		return ResponseEntity.status(HttpStatus.OK).body(result);
 	}
+
+	// TODO copied from ServiceController --> unify
+	protected String reserveNode() {
+		LOGGER.info("Trying to reserve a node...");
+		final int maxRetryCount = controllerProperties.getController().getRetryCount();
+
+		String nodeId = null;
+		int i = 0;
+
+		do {
+			nodeId = nodeRegistry.reserveNode();
+			LOGGER.info("Reserved node is {}", nodeId);
+
+			if(nodeId == null) {
+				i++;
+				waitForRetry();
+			}
+		}
+		while(nodeId == null && i < maxRetryCount);
+
+		if(nodeId == null) {
+			LOGGER.info("No free nodes found after {} retries", maxRetryCount);
+		}
+
+		return nodeId;
+	}
+
+	private void waitForRetry() {
+		try {
+			long retryDelay = controllerProperties.getController().getRetryDelay();
+			LOGGER.info("Waiting for {} ms before retrying", retryDelay);
+			Thread.sleep(retryDelay);
+		}
+		catch(InterruptedException e) {
+			LOGGER.error(e.getMessage(), e);
+		}
+	}
+
 }

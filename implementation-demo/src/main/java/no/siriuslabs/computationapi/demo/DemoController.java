@@ -1,5 +1,8 @@
 package no.siriuslabs.computationapi.demo;
 
+import no.siriuslabs.computationapi.api.model.computation.ComputationResult;
+import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
+import no.siriuslabs.computationapi.api.model.computation.Status;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
 import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
@@ -35,6 +38,11 @@ public class DemoController {
 	public static final String MULTIPLIER_KEY = "multiplier";
 	public static final String AMOUNT_EMPTY_MESSAGE = "Amount is missing from dataset";
 	public static final String MULTIPLIER_EMPTY_MESSAGE = "Multiplier is missing from dataset";
+
+	public static final String RESULT_KEY = "result";
+	public static final String AVG_AMOUNT_KEY = "avgAmount";
+	public static final String AVG_MULTIPLIER_KEY = "avgMultiplier";
+	public static final String AVG_RESULT_KEY = "avgResult";
 
 	private final ConfigProperties configProperties;
 
@@ -153,13 +161,47 @@ public class DemoController {
 		long calcResult = amount * multiplier;
 
 		Map<String, Object> resultData = new HashMap<>();
-		resultData.put("result", calcResult);
+		resultData.put(RESULT_KEY, calcResult);
 
 		WorkPackageResult result = new WorkPackageResult(workPackage);
 		result.setData(resultData);
 
 		LOGGER.info("Computation finished. Returned result: {}", result);
 		return ResponseEntity.ok(result);
+	}
+
+	@PostMapping("/accumulateResults")
+	public ResponseEntity<ComputationResult> accumulateResults(@RequestBody RequestProtocol protocol) {
+		LOGGER.info("Calculating averages from {} results", protocol.getWorkPackageResults().size());
+
+		long avgAmount = 0;
+		long avgMultiplier = 0;
+		long avgCalcResult = 0;
+
+		for(WorkPackageResult workPackageResult : protocol.getWorkPackageResults()) {
+			long amount = Long.parseLong((String)workPackageResult.getWorkPackage().getData().get(AMOUNT_KEY));
+			long multiplier = Long.parseLong((String)workPackageResult.getWorkPackage().getData().get(MULTIPLIER_KEY));
+			long calcResult = ((Integer)workPackageResult.getData().get(RESULT_KEY)).longValue();
+
+			avgAmount += amount;
+			avgMultiplier += multiplier;
+			avgCalcResult += calcResult;
+		}
+
+		long numberOfResults = protocol.getWorkPackageResults().size();
+		avgAmount = avgAmount / numberOfResults;
+		avgMultiplier = avgMultiplier / numberOfResults;
+		avgCalcResult = avgCalcResult / numberOfResults;
+		LOGGER.info("Average amount was {}, average multiplier {} and average result {}", avgAmount, avgMultiplier, avgCalcResult);
+
+		Map<String, Object> resultData = new HashMap<>();
+		resultData.put(AVG_AMOUNT_KEY, avgAmount);
+		resultData.put(AVG_MULTIPLIER_KEY, avgMultiplier);
+		resultData.put(AVG_RESULT_KEY, avgCalcResult);
+
+		final ComputationResult result = new ComputationResult(Status.DONE, protocol, resultData);
+		LOGGER.info("Result accumulation finished. Returned result: {}", result);
+		return ResponseEntity.ok().body(result);
 	}
 
 	private long getNextId() {

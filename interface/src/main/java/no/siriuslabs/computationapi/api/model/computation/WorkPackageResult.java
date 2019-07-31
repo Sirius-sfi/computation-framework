@@ -8,6 +8,12 @@ public class WorkPackageResult {
 
 	private Map<String, Object> data;
 
+	/**
+	 * Constructor needed for de-serialization.
+	 */
+	public WorkPackageResult() {
+	}
+
 	public WorkPackageResult(WorkPackage workPackage) {
 		this.workPackage = workPackage;
 	}

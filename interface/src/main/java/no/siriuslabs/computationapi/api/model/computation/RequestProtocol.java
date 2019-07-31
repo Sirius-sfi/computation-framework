@@ -9,11 +9,17 @@ import java.util.List;
 
 public class RequestProtocol {
 
-	private final DomainType domain;
-	private final ComputationRequest computationRequest;
+	private DomainType domain;
+	private ComputationRequest computationRequest;
 
 	private List<WorkPackage> workPackages;
 	private List<WorkPackageResult> workPackageResults;
+
+	/**
+	 * Constructor needed for de-serialization.
+	 */
+	public RequestProtocol() {
+	}
 
 	public RequestProtocol(DomainType domain, ComputationRequest computationRequest) {
 		this.domain = domain;
