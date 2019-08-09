@@ -8,6 +8,8 @@ public class WorkPackageResult {
 
 	private Map<String, Object> data;
 
+	// TODO add node information
+
 	/**
 	 * Constructor needed for de-serialization.
 	 */
