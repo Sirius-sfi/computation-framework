@@ -67,6 +67,7 @@ public class DataPreparationService {
 			final DomainType domain = DomainType.valueOf((String) row.get("domain"));
 			final Number id = (Number) row.get("id");
 			WorkPackage workPackage = new WorkPackage(domain, id.longValue());
+			workPackage.setRunId((Integer) row.get("runId"));
 			workPackage.setData((Map<String, Object>) row.get("data"));
 			workPackages.add(workPackage);
 		}

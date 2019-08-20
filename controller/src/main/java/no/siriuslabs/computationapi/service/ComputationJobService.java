@@ -74,6 +74,7 @@ public class ComputationJobService {
 
 		Map<String, Object> wpMap = (Map<String, Object>) resultMap.get("workPackage");
 		WorkPackage wp = new WorkPackage(DomainType.valueOf((String) wpMap.get("domain")), ((Number) wpMap.get("id")).longValue());
+		wp.setRunId((Integer) wpMap.get("runId"));
 		wp.setData((Map<String, Object>) wpMap.get("data"));
 
 		final WorkPackageResult result = new WorkPackageResult(wp);

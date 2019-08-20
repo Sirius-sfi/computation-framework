@@ -5,6 +5,7 @@ import java.util.Map;
 public class WorkPackage {
 
 	private DomainType domain;
+	private long runId;
 	private long id;
 
 	private Map<String, Object> data;
@@ -26,6 +27,14 @@ public class WorkPackage {
 
 	public void setDomain(DomainType domain) {
 		this.domain = domain;
+	}
+
+	public long getRunId() {
+		return runId;
+	}
+
+	public void setRunId(long runId) {
+		this.runId = runId;
 	}
 
 	public long getId() {
