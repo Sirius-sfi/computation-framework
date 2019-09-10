@@ -28,13 +28,6 @@ public class RequestProtocol {
 		workPackageResults = new ArrayList<>();
 	}
 
-	// TODO should only be temporary
-	public void cleanup() {
-		computationRequest = null;
-		workPackages.clear();
-		workPackageResults.clear();
-	}
-
 	public DomainType getDomain() {
 		return domain;
 	}

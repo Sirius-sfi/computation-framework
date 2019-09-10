@@ -1,7 +1,7 @@
 package no.siriuslabs.computationapi.demo;
 
 import no.siriuslabs.computationapi.api.model.computation.ComputationResult;
-import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
+import no.siriuslabs.computationapi.api.model.computation.ResultsProtocol;
 import no.siriuslabs.computationapi.api.model.computation.Status;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
@@ -171,7 +171,7 @@ public class DemoController {
 	}
 
 	@PostMapping("/accumulateResults")
-	public ResponseEntity<ComputationResult> accumulateResults(@RequestBody RequestProtocol protocol) {
+	public ResponseEntity<ComputationResult> accumulateResults(@RequestBody ResultsProtocol protocol) {
 		LOGGER.info("Calculating averages from {} results", protocol.getWorkPackageResults().size());
 
 		long avgAmount = 0;
@@ -199,7 +199,7 @@ public class DemoController {
 		resultData.put(AVG_MULTIPLIER_KEY, avgMultiplier);
 		resultData.put(AVG_RESULT_KEY, avgCalcResult);
 
-		final ComputationResult result = new ComputationResult(Status.DONE, protocol, resultData);
+		final ComputationResult result = new ComputationResult(Status.DONE, resultData);
 		LOGGER.info("Result accumulation finished. Returned result: {}", result);
 		return ResponseEntity.ok().body(result);
 	}

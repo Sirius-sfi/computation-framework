@@ -4,6 +4,7 @@ import no.siriuslabs.computationapi.api.model.computation.ComputationResult;
 import no.siriuslabs.computationapi.api.model.computation.ComputationStatus;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
+import no.siriuslabs.computationapi.api.model.computation.ResultsProtocol;
 import no.siriuslabs.computationapi.api.model.computation.Status;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.config.ControllerProperties;
@@ -167,7 +168,8 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		URI nodeUri = nodeRegistry.getUriForNode(nodeId);
 		URI uri = new URI(nodeUri + ACCUMULATE_RESULTS_PATH);
 		LOGGER.info("Node-URI to be called: {}", uri);
-		HttpEntity<RequestProtocol> entity = (HttpEntity<RequestProtocol>) ControllerHelper.createHttpEntity(protocol);
+
+		HttpEntity<ResultsProtocol> entity = (HttpEntity<ResultsProtocol>) ControllerHelper.createHttpEntity(new ResultsProtocol(protocol.getDomain(), protocol.getWorkPackageResults()));
 
 		nodeRegistry.occupyNode(nodeId);
 		ResponseEntity<ComputationResult> response = restTemplate.exchange(uri, HttpMethod.POST, entity, ComputationResult.class);

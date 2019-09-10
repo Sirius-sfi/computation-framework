@@ -7,7 +7,6 @@ public class ComputationResult {
 	private Status status;
 	private String errorMessage;
 
-	private RequestProtocol protocol;
 	private Map<String, Object> results;
 
 	/**
@@ -21,9 +20,8 @@ public class ComputationResult {
 		this.errorMessage = errorMessage;
 	}
 
-	public ComputationResult(Status status, RequestProtocol protocol, Map<String, Object> results) {
+	public ComputationResult(Status status, Map<String, Object> results) {
 		this.status = status;
-		this.protocol = protocol;
 		this.results = results;
 	}
 
@@ -41,14 +39,6 @@ public class ComputationResult {
 
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
-	}
-
-	public RequestProtocol getProtocol() {
-		return protocol;
-	}
-
-	public void setProtocol(RequestProtocol protocol) {
-		this.protocol = protocol;
 	}
 
 	public Map<String, Object> getResults() {
