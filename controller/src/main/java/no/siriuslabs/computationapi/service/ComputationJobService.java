@@ -46,6 +46,8 @@ public class ComputationJobService {
 	public void runComputation(String nodeId, URI nodeUri, WorkPackage workPackage) throws URISyntaxException {
 		LOGGER.info("Executing asynchronously in thread {}", Thread.currentThread().getName());
 
+		long starttime = System.currentTimeMillis();
+
 		nodeRegistry.occupyNode(nodeId);
 
 		URI uri = new URI(nodeUri + SERVICE_PATH);
@@ -61,6 +63,11 @@ public class ComputationJobService {
 		nodeRegistry.freeNode(nodeId);
 
 		WorkPackageResult result = getResultFromResponse(response);
+		result.setNodeId(nodeId);
+		final long endtime = System.currentTimeMillis();
+		result.setFinishedTimestamp(endtime);
+		result.setRunningTime(endtime - starttime);
+		LOGGER.info("Computation on node {} took {} ms", nodeId, endtime - starttime);
 
 		ResultUpdateEvent event = new ResultUpdateEvent(this, result);
 		LOGGER.info("Publishing event: {}", event);

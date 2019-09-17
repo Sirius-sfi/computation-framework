@@ -2,6 +2,7 @@ package no.siriuslabs.computationapi.event;
 
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
+import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,17 +12,21 @@ public class DataPreparartionFinishedEvent extends AbstractDataWorkflowEvent {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataPreparartionFinishedEvent.class);
 
-	private final DomainType domain;
+	private final ComputationRequest request;
 	private final List<WorkPackage> workPackages;
 
-	public DataPreparartionFinishedEvent(Object source, DomainType domain, List<WorkPackage> workPackages) {
+	public DataPreparartionFinishedEvent(Object source, ComputationRequest request, List<WorkPackage> workPackages) {
 		super(source);
-		this.domain = domain;
+		this.request = request;
 		this.workPackages = workPackages;
 	}
 
+	public ComputationRequest getRequest() {
+		return request;
+	}
+
 	public DomainType getDomain() {
-		return domain;
+		return request.getDomain();
 	}
 
 	public List<WorkPackage> getWorkPackages() {
@@ -31,7 +36,7 @@ public class DataPreparartionFinishedEvent extends AbstractDataWorkflowEvent {
 	@Override
 	public String toString() {
 		return "DataPreparartionFinishedEvent{" +
-				"domain=" + domain +
+				"domain=" + request.getDomain() +
 				", workPackages=" + workPackages +
 				'}';
 	}

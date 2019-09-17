@@ -199,9 +199,23 @@ public class DemoController {
 		resultData.put(AVG_MULTIPLIER_KEY, avgMultiplier);
 		resultData.put(AVG_RESULT_KEY, avgCalcResult);
 
+		addTimingResults(protocol, resultData);
+
 		final ComputationResult result = new ComputationResult(Status.DONE, resultData);
 		LOGGER.info("Result accumulation finished. Returned result: {}", result);
 		return ResponseEntity.ok().body(result);
+	}
+
+	// TODO unify with GA implementation
+	private void addTimingResults(@RequestBody ResultsProtocol protocol, Map<String, Object> resultData) {
+		Map<String, Object> timingData = new HashMap<>();
+		timingData.put("computingTime", protocol.getFinishedTimestamp() - protocol.getStartedTimestamp());
+		timingData.put("preparationTime", protocol.getPreparationTime());
+		timingData.put("fastestWP", protocol.getMinWpTime());
+		timingData.put("slowestWP", protocol.getMaxWpTime());
+		timingData.put("avgWP", protocol.getAvgWpTime());
+
+		resultData.put("timingData", timingData);
 	}
 
 	private long getNextId() {

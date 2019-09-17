@@ -7,6 +7,7 @@ import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
 import no.siriuslabs.computationapi.api.model.computation.ResultsProtocol;
 import no.siriuslabs.computationapi.api.model.computation.Status;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
+import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
 import no.siriuslabs.computationapi.config.ControllerProperties;
 import no.siriuslabs.computationapi.event.AbstractDataWorkflowEvent;
 import no.siriuslabs.computationapi.event.ComputationRequestAddedEvent;
@@ -169,7 +170,10 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		URI uri = new URI(nodeUri + ACCUMULATE_RESULTS_PATH);
 		LOGGER.info("Node-URI to be called: {}", uri);
 
-		HttpEntity<ResultsProtocol> entity = (HttpEntity<ResultsProtocol>) ControllerHelper.createHttpEntity(new ResultsProtocol(protocol.getDomain(), protocol.getWorkPackageResults()));
+		final ResultsProtocol resultsProtocol = new ResultsProtocol(protocol.getDomain(), protocol.getWorkPackageResults());
+		addTimingData(protocol, resultsProtocol);
+
+		HttpEntity<ResultsProtocol> entity = (HttpEntity<ResultsProtocol>) ControllerHelper.createHttpEntity(resultsProtocol);
 
 		nodeRegistry.occupyNode(nodeId);
 		ResponseEntity<ComputationResult> response = restTemplate.exchange(uri, HttpMethod.POST, entity, ComputationResult.class);
@@ -185,6 +189,34 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 
 		ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
 		return ResponseEntity.status(HttpStatus.OK).body(result);
+	}
+
+	private void addTimingData(RequestProtocol protocol, ResultsProtocol resultsProtocol) {
+		resultsProtocol.setStartedTimestamp(protocol.getComputationRequest().getStartedTimestamp());
+		resultsProtocol.setPreparationTime(protocol.getComputationRequest().getPreparationTime());
+
+		long latestFinishTimestamp = 0;
+		long minWpTime = Long.MAX_VALUE;
+		long maxWpTime = 0;
+		long wpSum = 0;
+		for(WorkPackageResult res : protocol.getWorkPackageResults()) {
+			if(latestFinishTimestamp < res.getFinishedTimestamp()) {
+				latestFinishTimestamp = res.getFinishedTimestamp();
+			}
+			if(minWpTime > res.getRunningTime()) {
+				minWpTime = res.getRunningTime();
+			}
+			if(maxWpTime < res.getRunningTime()) {
+				maxWpTime = res.getRunningTime();
+			}
+
+			wpSum += res.getRunningTime();
+		}
+
+		resultsProtocol.setFinishedTimestamp(latestFinishTimestamp);
+		resultsProtocol.setMinWpTime(minWpTime);
+		resultsProtocol.setMaxWpTime(maxWpTime);
+		resultsProtocol.setAvgWpTime(wpSum / protocol.getWorkPackageResults().size());
 	}
 
 	// TODO copied from ServiceController --> unify

@@ -46,6 +46,8 @@ public class DataPreparationService {
 	public void prepareAndPackageData(String nodeId, URI nodeUri, ComputationRequest request) throws URISyntaxException, ExecutionException {
 		LOGGER.info("Executing asynchronously in thread {}", Thread.currentThread().getName());
 
+		long starttime = System.currentTimeMillis();
+
 		nodeRegistry.occupyNode(nodeId);
 
 		URI uri = new URI(nodeUri + SERVICE_PATH);
@@ -72,7 +74,11 @@ public class DataPreparationService {
 			workPackages.add(workPackage);
 		}
 
-		DataPreparartionFinishedEvent event = new DataPreparartionFinishedEvent(this, request.getDomain(), workPackages);
+		long finishtime = System.currentTimeMillis();
+		request.setPreparationTime(finishtime - starttime);
+		LOGGER.info("Preparartion phase on node {} took {} ms", nodeId, finishtime - starttime);
+
+		DataPreparartionFinishedEvent event = new DataPreparartionFinishedEvent(this, request, workPackages);
 		LOGGER.info("Publishing event: {}", event);
 
 		applicationEventPublisher.publishEvent(event);

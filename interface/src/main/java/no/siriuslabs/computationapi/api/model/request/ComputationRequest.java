@@ -6,6 +6,8 @@ public class ComputationRequest {
 
 	private DomainType domain;
 	private Payload payload;
+	private long startedTimestamp;
+	private long preparationTime;
 
 	/**
 	 * Constructor needed for de-serialization.
@@ -27,6 +29,22 @@ public class ComputationRequest {
 
 	public void setPayload(Payload payload) {
 		this.payload = payload;
+	}
+
+	public long getStartedTimestamp() {
+		return startedTimestamp;
+	}
+
+	public void setStartedTimestamp(long startedTimestamp) {
+		this.startedTimestamp = startedTimestamp;
+	}
+
+	public long getPreparationTime() {
+		return preparationTime;
+	}
+
+	public void setPreparationTime(long preparationTime) {
+		this.preparationTime = preparationTime;
 	}
 
 	@Override

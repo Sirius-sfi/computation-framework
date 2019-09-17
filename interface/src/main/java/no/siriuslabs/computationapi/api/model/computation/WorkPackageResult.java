@@ -8,7 +8,10 @@ public class WorkPackageResult {
 
 	private Map<String, Object> data;
 
-	// TODO add node information
+	private long runningTime;
+	private long finishedTimestamp;
+
+	private String nodeId;
 
 	/**
 	 * Constructor needed for de-serialization.
@@ -30,6 +33,30 @@ public class WorkPackageResult {
 
 	public void setData(Map<String, Object> data) {
 		this.data = data;
+	}
+
+	public long getRunningTime() {
+		return runningTime;
+	}
+
+	public void setRunningTime(long runningTime) {
+		this.runningTime = runningTime;
+	}
+
+	public long getFinishedTimestamp() {
+		return finishedTimestamp;
+	}
+
+	public void setFinishedTimestamp(long finishedTimestamp) {
+		this.finishedTimestamp = finishedTimestamp;
+	}
+
+	public String getNodeId() {
+		return nodeId;
+	}
+
+	public void setNodeId(String nodeId) {
+		this.nodeId = nodeId;
 	}
 
 	@Override

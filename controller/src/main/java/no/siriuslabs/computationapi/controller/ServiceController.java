@@ -57,6 +57,8 @@ public class ServiceController {
 
 		DomainType domain = request.getDomain();
 
+		request.setStartedTimestamp(System.currentTimeMillis());
+
 		// TODO check status (task, not node usage) - if busy with that domain --> fail
 
 		String nodeId = reserveNode();
