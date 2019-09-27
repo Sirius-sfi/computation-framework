@@ -78,6 +78,14 @@ public class NodeRegistry {
 			return null;
 		}
 
+		if(NodeStatus.BUSY == freeNode.getStatus() || NodeStatus.RESERVED == freeNode.getStatus()) {
+			LOGGER.error("Unexpected node status on reserve: Node with ID {} has status {} and cannot be reserved", freeNode.getId(), freeNode.getStatus());
+			throw new IllegalStateException("Node with ID " + freeNode.getId() + " has status " + freeNode.getStatus() + " and cannot be reserved");
+		}
+		if(NodeStatus.READY != freeNode.getStatus()) {
+			LOGGER.warn("Unexpected node status on reserve: Node with ID {} has status {} instead of READY", freeNode.getId(), freeNode.getStatus());
+		}
+
 		freeNode.setStatus(NodeStatus.RESERVED);
 		return freeNode.getId();
 	}
@@ -100,7 +108,7 @@ public class NodeRegistry {
 
 		WorkerNode node = workerNodes.get(nodeId);
 		if(NodeStatus.RESERVED != node.getStatus()) {
-			LOGGER.error("Node with ID {} has status {} instead of RESERVED", nodeId, node.getStatus());
+			LOGGER.error("Unexpected node status on occupy: Node with ID {} has status {} instead of RESERVED", nodeId, node.getStatus());
 			throw new IllegalStateException("Node with ID " + nodeId + " has status " + node.getStatus() + " instead of RESERVED");
 		}
 
@@ -116,8 +124,7 @@ public class NodeRegistry {
 
 		WorkerNode node = workerNodes.get(nodeId);
 		if(NodeStatus.BUSY != node.getStatus()) {
-			LOGGER.error("Node with ID {} has status {} instead of BUSY", nodeId, node.getStatus());
-			throw new IllegalStateException("Node with ID " + nodeId + " has status " + node.getStatus() + " instead of BUSY");
+			LOGGER.warn("Unexpected node status on free: Node with ID {} has status {} instead of BUSY", nodeId, node.getStatus());
 		}
 
 		node.setStatus(NodeStatus.READY);

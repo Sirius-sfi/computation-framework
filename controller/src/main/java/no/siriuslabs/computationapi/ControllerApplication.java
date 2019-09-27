@@ -20,6 +20,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"no.siriuslabs.computationapi", "no.siriuslabs.computationapi.api"})
@@ -83,7 +87,8 @@ public class ControllerApplication {
 
 		final long startupDelay = controllerProperties.getController().getTimer().getStartupDelay();
 		final long callInterval = controllerProperties.getController().getTimer().getCallInterval();
-		setupTimer("work distribution timer", timerTask, startupDelay, callInterval);
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		ScheduledFuture<?> future = executor.scheduleAtFixedRate(timerTask, startupDelay, callInterval, TimeUnit.MILLISECONDS);
 	}
 
 	private void setupTimer(String name, TimerTask timerTask, long startupDelay, long callInterval) {
