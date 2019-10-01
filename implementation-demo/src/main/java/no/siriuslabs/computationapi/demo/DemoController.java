@@ -119,7 +119,7 @@ public class DemoController {
 		LOGGER.info("Received data package for preparation: {}", request);
 
 		try {
-			final int delay = 30000;
+			final int delay = 15000;
 			LOGGER.info("Preparing data for " + delay / 1000 + "s...");
 			Thread.sleep(delay);
 			LOGGER.info("Preparing data is done");
@@ -147,7 +147,7 @@ public class DemoController {
 		LOGGER.info("Received data package for computation: {}", workPackage);
 
 		try {
-			final int delay = 120000;
+			final int delay = 60000;
 			LOGGER.info("Computing package {} for " + delay / 1000 + "s...", workPackage.getId());
 			Thread.sleep(delay);
 			LOGGER.info("Computing package {} is done", workPackage.getId());
