@@ -7,6 +7,8 @@ import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
 import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
 import no.siriuslabs.computationapi.api.model.request.Payload;
+import no.siriuslabs.computationapi.implementation.AbstractImplementationController;
+import no.siriuslabs.computationapi.implementation.ImplementationController;
 import no.siriuslabs.computationapi.implementation.config.ConfigProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO create interface that dictates controller's service methods
 @RestController
-public class DemoController {
+public class DemoController extends AbstractImplementationController implements ImplementationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DemoController.class);
 
@@ -44,13 +45,9 @@ public class DemoController {
 	public static final String AVG_MULTIPLIER_KEY = "avgMultiplier";
 	public static final String AVG_RESULT_KEY = "avgResult";
 
-	private final ConfigProperties configProperties;
-
-	private long idCounter = 0;
-
 	@Autowired
 	public DemoController(ConfigProperties configProperties) {
-		this.configProperties = configProperties;
+		super(configProperties);
 	}
 
 	// TODO receive ping
@@ -204,22 +201,6 @@ public class DemoController {
 		final ComputationResult result = new ComputationResult(Status.DONE, resultData);
 		LOGGER.info("Result accumulation finished. Returned result: {}", result);
 		return ResponseEntity.ok().body(result);
-	}
-
-	// TODO unify with GA implementation
-	private void addTimingResults(@RequestBody ResultsProtocol protocol, Map<String, Object> resultData) {
-		Map<String, Object> timingData = new HashMap<>();
-		timingData.put("computingTime", protocol.getFinishedTimestamp() - protocol.getStartedTimestamp());
-		timingData.put("preparationTime", protocol.getPreparationTime());
-		timingData.put("fastestWP", protocol.getMinWpTime());
-		timingData.put("slowestWP", protocol.getMaxWpTime());
-		timingData.put("avgWP", protocol.getAvgWpTime());
-
-		resultData.put("timingData", timingData);
-	}
-
-	private long getNextId() {
-		return idCounter += 1;
 	}
 
 }
