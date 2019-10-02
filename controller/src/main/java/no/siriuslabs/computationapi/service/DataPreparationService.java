@@ -76,7 +76,9 @@ public class DataPreparationService {
 
 		long finishtime = System.currentTimeMillis();
 		request.setPreparationTime(finishtime - starttime);
-		LOGGER.info("Preparartion phase on node {} took {} ms", nodeId, finishtime - starttime);
+		request.setNumberNodesStart(nodeRegistry.getNumberOfNodes());
+		request.setNumberWPs(workPackages.size());
+		LOGGER.info("Preparation phase on node {} took {} ms", nodeId, finishtime - starttime);
 
 		DataPreparartionFinishedEvent event = new DataPreparartionFinishedEvent(this, request, workPackages);
 		LOGGER.info("Publishing event: {}", event);

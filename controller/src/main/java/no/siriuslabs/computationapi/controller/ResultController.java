@@ -194,6 +194,9 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 	private void addTimingData(RequestProtocol protocol, ResultsProtocol resultsProtocol) {
 		resultsProtocol.setStartedTimestamp(protocol.getComputationRequest().getStartedTimestamp());
 		resultsProtocol.setPreparationTime(protocol.getComputationRequest().getPreparationTime());
+		resultsProtocol.setNumberWPs(protocol.getWorkPackages().size());
+		resultsProtocol.setNumberNodesStart(protocol.getComputationRequest().getNumberNodesStart());
+		resultsProtocol.setNumberNodesEnd(nodeRegistry.getNumberOfNodes());
 
 		long latestFinishTimestamp = 0;
 		long minWpTime = Long.MAX_VALUE;

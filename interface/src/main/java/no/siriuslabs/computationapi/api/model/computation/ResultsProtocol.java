@@ -18,6 +18,11 @@ public class ResultsProtocol {
 	private long maxWpTime;
 	private long avgWpTime;
 
+	private int numberNodesStart;
+	private int numberNodesEnd;
+
+	private int numberWPs;
+
 	private List<WorkPackageResult> workPackageResults;
 
 	/**
@@ -81,6 +86,30 @@ public class ResultsProtocol {
 
 	public void setAvgWpTime(long avgWpTime) {
 		this.avgWpTime = avgWpTime;
+	}
+
+	public int getNumberNodesStart() {
+		return numberNodesStart;
+	}
+
+	public void setNumberNodesStart(int numberNodesStart) {
+		this.numberNodesStart = numberNodesStart;
+	}
+
+	public int getNumberNodesEnd() {
+		return numberNodesEnd;
+	}
+
+	public void setNumberNodesEnd(int numberNodesEnd) {
+		this.numberNodesEnd = numberNodesEnd;
+	}
+
+	public int getNumberWPs() {
+		return numberWPs;
+	}
+
+	public void setNumberWPs(int numberWPs) {
+		this.numberWPs = numberWPs;
 	}
 
 	public List<WorkPackageResult> getWorkPackageResults() {

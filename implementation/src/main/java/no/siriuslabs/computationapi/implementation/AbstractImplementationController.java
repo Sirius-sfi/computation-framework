@@ -29,6 +29,9 @@ public abstract class AbstractImplementationController implements Implementation
 		Map<String, Object> timingData = new HashMap<>();
 		timingData.put("computingTime", protocol.getFinishedTimestamp() - protocol.getStartedTimestamp());
 		timingData.put("preparationTime", protocol.getPreparationTime());
+		timingData.put("numberNodesStart", protocol.getNumberNodesStart());
+		timingData.put("numberNodesEnd", protocol.getNumberNodesEnd());
+		timingData.put("numberWPs", protocol.getNumberWPs());
 		timingData.put("fastestWP", protocol.getMinWpTime());
 		timingData.put("slowestWP", protocol.getMaxWpTime());
 		timingData.put("avgWP", protocol.getAvgWpTime());
