@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+
+  demo-controller:
+    container_name: demo-controller
+    ports:
+      - "8080:8080"
+    image: "ostahluio/controller:0.1-SNAPSHOT"
+    entrypoint:
+      - "java"
+      - "-XX:+UnlockExperimentalVMOptions"
+      - "-XX:+UseCGroupMemoryLimitForHeap"
+      - "-jar"
+      - "controller.jar"
+      - "DEMO"
+
+  demo-node-1:
+    container_name: demo-node-1
+    depends_on:
+      - demo-controller
+    ports:
+      - "8889:8889"
+    image: "ostahluio/implementation-demo:0.1-SNAPSHOT"
+
+  demo-node-2:
+    container_name: demo-node-2
+    depends_on:
+      - demo-node-1
+    ports:
+      - "8890:8889"
+    image: "ostahluio/implementation-demo:0.1-SNAPSHOT"
+
+  demo-node-3:
+    container_name: demo-node-3
+    depends_on:
+      - demo-node-2
+    ports:
+      - "8891:8889"
+    image: "ostahluio/implementation-demo:0.1-SNAPSHOT"
