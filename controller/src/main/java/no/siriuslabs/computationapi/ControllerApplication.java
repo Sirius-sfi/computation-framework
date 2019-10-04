@@ -54,6 +54,15 @@ public class ControllerApplication {
 	@Profile("!test")
 	public CommandLineRunner run() {
 		return (String... args) -> {
+			LOGGER.info("Start-up arguments: {}", args);
+			if(args.length == 0) {
+				throw new IllegalArgumentException("Arguments list is empty. Must contain domain for controller!");
+			}
+
+			// TODO rework for multi-domains later
+			DomainType domain = ControllerHelper.getDomainTypeFromParameter(args[0]);
+			workPackageController.setDomain(domain);
+
 			LOGGER.info("Setting up timers");
 			setupPingTimer();
 			setupWorkDistributionTimer();
@@ -74,14 +83,10 @@ public class ControllerApplication {
 	}
 
 	private void setupWorkDistributionTimer() {
-		String domainName = System.getProperties().getProperty("domain");
-		LOGGER.info("Domain set by command line is {}", domainName);
-		DomainType domain = ControllerHelper.getDomainTypeFromParameter(domainName);
-
 		TimerTask timerTask = new TimerTask() {
 			@Override
 			public void run() {
-				workPackageController.distributeWork(domain);
+				workPackageController.distributeWork();
 			}
 		};
 

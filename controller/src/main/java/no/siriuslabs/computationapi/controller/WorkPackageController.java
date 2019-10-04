@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -26,6 +27,10 @@ public class WorkPackageController implements ApplicationListener<DataPrepararti
 	private final ComputationJobService computationJobService;
 
 	private final ConcurrentHashMap<DomainType, ConcurrentLinkedQueue<WorkPackage>> workToDo;
+
+	// TODO rework for multi-domains later
+	// TODO offer service to set/add/remove domains?
+	private DomainType domain;
 
 	@Autowired
 	public WorkPackageController(NodeRegistry nodeRegistry, ComputationJobService computationJobService) {
@@ -49,10 +54,14 @@ public class WorkPackageController implements ApplicationListener<DataPrepararti
 		workToDo.get(domain).addAll(data);
 	}
 
-	public void distributeWork(DomainType domain) {
+	public void distributeWork() {
 		final String methodName = "distributeWork";
 		ControllerHelper.logRequestStart(LOGGER, methodName, domain);
 		try {
+			if(domain == null) {
+				LOGGER.warn("Domain is not set");
+				return;
+			}
 
 			ConcurrentLinkedQueue<WorkPackage> queue = workToDo.get(domain);
 			if(queue == null) {
@@ -97,4 +106,18 @@ public class WorkPackageController implements ApplicationListener<DataPrepararti
 		}
 	}
 
+	@GetMapping("activeDomain")
+	public String getActiveDomain() {
+		final String methodName = "getNodeList";
+		ControllerHelper.logRequestStart(LOGGER, methodName);
+
+		String result = domain == null ? null : domain.name();
+
+		ControllerHelper.logRequestFinish(LOGGER, methodName, result);
+		return result;
+	}
+
+	public void setDomain(DomainType domain) {
+		this.domain = domain;
+	}
 }
