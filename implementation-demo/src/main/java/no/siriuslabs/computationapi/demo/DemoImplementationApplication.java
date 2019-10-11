@@ -13,6 +13,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 
+import javax.annotation.PreDestroy;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+
 @SpringBootApplication
 @ComponentScan(basePackages = {"no.siriuslabs.computationapi.implementation", "no.siriuslabs.computationapi.demo"})
 public class DemoImplementationApplication extends AbstractImplementationApplication {
@@ -45,6 +49,12 @@ public class DemoImplementationApplication extends AbstractImplementationApplica
 				SpringApplication.exit(ctx, () -> 1);
 			}
 		};
+	}
+
+	@PreDestroy
+	@Profile("!test")
+	private void unregisterOnShutdown() throws URISyntaxException, UnknownHostException {
+		unregisterWithController();
 	}
 
 }

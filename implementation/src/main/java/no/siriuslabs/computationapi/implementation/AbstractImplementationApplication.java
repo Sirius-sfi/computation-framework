@@ -21,9 +21,28 @@ import java.net.UnknownHostException;
 
 public abstract class AbstractImplementationApplication {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractImplementationApplication.class);
+	protected enum RegistrationFlavour {
+		REGISTER("registering", "registerNode"),
+		UNREGISTER("unregistering", "unregisterNode");
 
-	public static final String REGISTER_NODE_SERVICE_PATH = "registerNode";
+		private final String activityString;
+		private final String serviceSubPath;
+
+		RegistrationFlavour(String activityString, String serviceSubPath) {
+			this.activityString = activityString;
+			this.serviceSubPath = serviceSubPath;
+		}
+
+		public String getActivityString() {
+			return activityString;
+		}
+
+		public String getServiceSubPath() {
+			return serviceSubPath;
+		}
+	}
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractImplementationApplication.class);
 
 	private final ConfigProperties configProperties;
 
@@ -49,7 +68,7 @@ public abstract class AbstractImplementationApplication {
 		LOGGER.info("Starting to register with controller");
 
 		WorkerNode node = configureWorkerNode();
-		URI uri = createServiceUri();
+		URI uri = createServiceUri(RegistrationFlavour.REGISTER);
 
 		return register(node, uri);
 	}
@@ -70,7 +89,7 @@ public abstract class AbstractImplementationApplication {
 		return node;
 	}
 
-	protected URI createServiceUri() throws URISyntaxException {
+	protected URI createServiceUri(RegistrationFlavour flavour) throws URISyntaxException {
 		final URI controllerUrl;
 		if(isDockerActive()) {
 			controllerUrl = configProperties.getController().getDockerUrl();
@@ -79,7 +98,7 @@ public abstract class AbstractImplementationApplication {
 			controllerUrl = configProperties.getController().getLocalUrl();
 		}
 		LOGGER.info("Controller's URL is {}", controllerUrl);
-		final String serviceUrl = controllerUrl + REGISTER_NODE_SERVICE_PATH;
+		final String serviceUrl = controllerUrl + flavour.getServiceSubPath();
 		LOGGER.info("Service URL to be called is {}", serviceUrl);
 
 		return new URI(serviceUrl);
@@ -98,14 +117,14 @@ public abstract class AbstractImplementationApplication {
 		boolean success = false;
 		int retryCounter = 0;
 		do {
-			final HttpStatus result = callRegisterService(uri, entity);
+			final HttpStatus result = callRegistrationService(RegistrationFlavour.REGISTER, uri, entity);
 			if(HttpStatus.OK == result) {
 				LOGGER.info("Registered successfully @ {}", uri);
 				success = true;
 				break;
 			}
 			else {
-				LOGGER.info("Not successful (response code {}) - preparing retry. Counter @ {}", result, retryCounter);
+				LOGGER.info("Registering not successful (response code {}) - preparing retry. Counter @ {}", result, retryCounter);
 				retryCounter++;
 				waitForRetry();
 			}
@@ -119,7 +138,7 @@ public abstract class AbstractImplementationApplication {
 		return success;
 	}
 
-	protected HttpStatus callRegisterService(URI uri, HttpEntity<WorkerNode> entity) {
+	protected HttpStatus callRegistrationService(RegistrationFlavour flavour, URI uri, HttpEntity<WorkerNode> entity) {
 		try {
 			ResponseEntity<Object> response = restTemplate.exchange(uri, HttpMethod.POST, entity, Object.class);
 
@@ -127,12 +146,34 @@ public abstract class AbstractImplementationApplication {
 			return response.getStatusCode();
 		}
 		catch(HttpClientErrorException e) {
-			LOGGER.error("Call to registering service failed with response code {} and message: {}", e.getStatusCode(), e.getResponseBodyAsString());
+			LOGGER.error("Call to {} service failed with response code {} and message: {}", flavour.getActivityString(), e.getStatusCode(), e.getResponseBodyAsString());
 			return e.getStatusCode();
 		}
 		catch(RestClientException e) {
-			LOGGER.error("Call to registering service failed with message: {}", e.getMessage());
+			LOGGER.error("Call to {} service failed with message: {}", flavour.getActivityString(), e.getMessage());
 			return null;
+		}
+	}
+
+	protected void unregisterWithController() throws URISyntaxException, UnknownHostException {
+		LOGGER.info("Starting to unregister with controller");
+
+		WorkerNode node = configureWorkerNode();
+		URI uri = new URI(createServiceUri(RegistrationFlavour.UNREGISTER) + "/" + node.getId());
+
+		unregister(node, uri);
+	}
+
+	private void unregister(WorkerNode node, URI uri) {
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity<WorkerNode> entity = new HttpEntity<>(node, headers);
+
+		final HttpStatus result = callRegistrationService(RegistrationFlavour.UNREGISTER, uri, entity);
+		if(HttpStatus.OK == result) {
+			LOGGER.info("Unregistered successfully @ {}", uri);
+		}
+		else {
+			LOGGER.info("Unregistering not successful (response code {})", result);
 		}
 	}
 

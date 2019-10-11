@@ -71,9 +71,9 @@ public class AbstractImplementationApplicationTest {
 
 			Mockito.when(configProperties.getController()).thenReturn(controller);
 
-			URI result = application.createServiceUri();
+			URI result = application.createServiceUri(AbstractImplementationApplication.RegistrationFlavour.REGISTER);
 
-			assertEquals(urlString + AbstractImplementationApplication.REGISTER_NODE_SERVICE_PATH, result.toString(), "URI is expected to match the URI set above");
+			assertEquals(urlString + AbstractImplementationApplication.RegistrationFlavour.REGISTER.getServiceSubPath(), result.toString(), "URI is expected to match the URI set above");
 		}
 		catch(URISyntaxException e) {
 			Assertions.fail(e.getMessage());
@@ -117,7 +117,7 @@ public class AbstractImplementationApplicationTest {
 		final URI uri = createUri();
 		Mockito.when(restTemplate.exchange(Mockito.eq(uri), Mockito.eq(HttpMethod.POST), Mockito.any(HttpEntity.class), Mockito.eq(Object.class))).thenThrow(new RestClientException("Expected RestClientException"));
 
-		assertNull(application.callRegisterService(uri, new HttpEntity<>(new WorkerNode())), "Null is expected to be returned after RestClientException in the call");
+		assertNull(application.callRegistrationService(AbstractImplementationApplication.RegistrationFlavour.REGISTER, uri, new HttpEntity<>(new WorkerNode())), "Null is expected to be returned after RestClientException in the call");
 	}
 
 	@DisplayName("Test callRegisterService() with HttpClientErrorException thrown by the call")
@@ -126,7 +126,7 @@ public class AbstractImplementationApplicationTest {
 		final URI uri = createUri();
 		Mockito.when(restTemplate.exchange(Mockito.eq(uri), Mockito.eq(HttpMethod.POST), Mockito.any(HttpEntity.class), Mockito.eq(Object.class))).thenThrow(new HttpClientErrorException(HttpStatus.I_AM_A_TEAPOT));
 
-		assertEquals(HttpStatus.I_AM_A_TEAPOT, application.callRegisterService(uri, new HttpEntity<>(new WorkerNode())), "Exception's status code is expected to be returned after RestClientException in the call");
+		assertEquals(HttpStatus.I_AM_A_TEAPOT, application.callRegistrationService(AbstractImplementationApplication.RegistrationFlavour.REGISTER, uri, new HttpEntity<>(new WorkerNode())), "Exception's status code is expected to be returned after RestClientException in the call");
 	}
 
 	@DisplayName("Test callRegisterService() with success and status code 200 (OK)")
@@ -135,7 +135,7 @@ public class AbstractImplementationApplicationTest {
 		final URI uri = createUri();
 		Mockito.when(restTemplate.exchange(Mockito.eq(uri), Mockito.eq(HttpMethod.POST), Mockito.any(HttpEntity.class), Mockito.eq(Object.class))).thenReturn(new ResponseEntity<Object>(HttpStatus.OK));
 
-		assertEquals(HttpStatus.OK, application.callRegisterService(uri, new HttpEntity<>(new WorkerNode())), "Status code 200 (OK) is expected to be returned after successful call");
+		assertEquals(HttpStatus.OK, application.callRegistrationService(AbstractImplementationApplication.RegistrationFlavour.REGISTER, uri, new HttpEntity<>(new WorkerNode())), "Status code 200 (OK) is expected to be returned after successful call");
 	}
 
 	private URI createUri() {

@@ -47,10 +47,11 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 	private Map<DomainType, RequestProtocol> protocolMap = new ConcurrentHashMap<>();
 
 	@Autowired
-	public ResultController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties, RestTemplate restTemplate) {
+	public ResultController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties/*, RestTemplate restTemplate*/) {
 		this.nodeRegistry = nodeRegistry;
 		this.controllerProperties = controllerProperties;
-		this.restTemplate = restTemplate;
+//		this.restTemplate = restTemplate; // TODO RestTemplate causes cyclic dependency in Spring
+		this.restTemplate = new RestTemplate();
 	}
 
 	@Override
@@ -257,6 +258,10 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		catch(InterruptedException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
+	}
+
+	protected RequestProtocol getProtocolForDomain(DomainType domainType) {
+		return protocolMap.get(domainType);
 	}
 
 }
