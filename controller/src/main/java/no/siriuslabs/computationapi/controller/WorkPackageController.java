@@ -4,6 +4,7 @@ import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.RequestProtocol;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
+import no.siriuslabs.computationapi.config.ControllerProperties;
 import no.siriuslabs.computationapi.event.AbstractDataWorkflowEvent;
 import no.siriuslabs.computationapi.event.DataPreparartionFinishedEvent;
 import no.siriuslabs.computationapi.event.ResultUpdateEvent;
@@ -26,11 +27,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 @RestController
-public class WorkPackageController implements ApplicationListener<AbstractDataWorkflowEvent> {
+public class WorkPackageController extends AbstractController implements ApplicationListener<AbstractDataWorkflowEvent> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkPackageController.class);
 
-	private final NodeRegistry nodeRegistry;
 	private final ComputationJobService computationJobService;
 	private final ResultController resultController;
 
@@ -42,8 +42,8 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 	private DomainType domain;
 
 	@Autowired
-	public WorkPackageController(NodeRegistry nodeRegistry, ComputationJobService computationJobService, ResultController resultController) {
-		this.nodeRegistry = nodeRegistry;
+	public WorkPackageController(NodeRegistry nodeRegistry, ComputationJobService computationJobService, ControllerProperties controllerProperties, ResultController resultController) {
+		super(nodeRegistry, controllerProperties);
 		this.computationJobService = computationJobService;
 		this.resultController = resultController;
 		workToDo = new ConcurrentHashMap<>(DomainType.values().length);
@@ -79,7 +79,7 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 
 	public void distributeWork() {
 		final String methodName = "distributeWork";
-		ControllerHelper.logRequestStart(LOGGER, methodName, domain);
+		logRequestStart(LOGGER, methodName, domain);
 		try {
 			if(domain == null) {
 				LOGGER.warn("Domain is not set");
@@ -105,7 +105,7 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 			LOGGER.error(e.getMessage(), e);
 		}
 		finally {
-			ControllerHelper.logVoidRequestFinish(LOGGER, methodName);
+			logVoidRequestFinish(LOGGER, methodName);
 		}
 	}
 
@@ -142,7 +142,7 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 			packagesToDo.remove(w);
 		}
 		for(Pair<WorkPackage, String> p : runningWorkPackages.values()) {
-			if(nodeRegistry.hasNode(p.getY())) {
+			if(getNodeRegistry().hasNode(p.getY())) {
 				packagesToDo.remove(p.getX());
 			}
 		}
@@ -150,7 +150,7 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 
 	private void distributeWorkToNodes(ConcurrentLinkedQueue<WorkPackage> queue) throws URISyntaxException {
 		while(true) {
-			String nodeId = nodeRegistry.reserveNode();
+			String nodeId = getNodeRegistry().reserveNode();
 			LOGGER.info("Reserved node {} to do some work", nodeId);
 
 			if(nodeId == null) {
@@ -161,14 +161,14 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 			WorkPackage workPackage = queue.poll();
 			if(workPackage == null) {
 				LOGGER.info("Queue seems to be empty (unexpectedly) --> cancelling work and freeing up node");
-				nodeRegistry.freeNode(nodeId);
+				getNodeRegistry().freeNode(nodeId);
 				break;
 			}
 
 			LOGGER.info("WorkPackage ready and node reserved - we can do something");
 
 			LOGGER.info("Invoking an asynchronous method from {}", Thread.currentThread().getName());
-			URI nodeUri = nodeRegistry.getUriForNode(nodeId);
+			URI nodeUri = getNodeRegistry().getUriForNode(nodeId);
 
 			runningWorkPackages.put(workPackage.getId(), new Pair<>(workPackage, nodeId));
 
@@ -179,11 +179,11 @@ public class WorkPackageController implements ApplicationListener<AbstractDataWo
 	@GetMapping("activeDomain")
 	public String getActiveDomain() {
 		final String methodName = "getNodeList";
-		ControllerHelper.logRequestStart(LOGGER, methodName);
+		logRequestStart(LOGGER, methodName);
 
 		String result = domain == null ? null : domain.name();
 
-		ControllerHelper.logRequestFinish(LOGGER, methodName, result);
+		logRequestFinish(LOGGER, methodName, result);
 		return result;
 	}
 

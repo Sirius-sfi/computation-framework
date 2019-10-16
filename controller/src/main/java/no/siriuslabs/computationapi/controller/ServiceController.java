@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-public class ServiceController {
+public class ServiceController extends AbstractController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceController.class);
 
@@ -35,17 +35,14 @@ public class ServiceController {
 	public static final String DATA_VALIDATION_FAILED_MSG = "Data validation failed: ";
 	public static final String VALIDATE_DATA_PATH = "/validateData";
 
-	private final NodeRegistry nodeRegistry;
 	private final DataPreparationService dataPreparationService;
-	private final ControllerProperties controllerProperties;
 	private final RestTemplate restTemplate;
 	private final ApplicationEventPublisher applicationEventPublisher;
 
 	@Autowired
 	public ServiceController(NodeRegistry nodeRegistry, DataPreparationService dataPreparationService, ControllerProperties controllerProperties, RestTemplate restTemplate, ApplicationEventPublisher applicationEventPublisher) {
-		this.nodeRegistry = nodeRegistry;
+		super(nodeRegistry, controllerProperties);
 		this.dataPreparationService = dataPreparationService;
-		this.controllerProperties = controllerProperties;
 		this.restTemplate = restTemplate;
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
@@ -53,7 +50,7 @@ public class ServiceController {
 	@PostMapping("/startComputation")
 	public ResponseEntity<Object> startComputation(@RequestBody ComputationRequest request) throws URISyntaxException, ExecutionException {
 		final String methodName = "startComputation";
-		ControllerHelper.logRequestStart(LOGGER, methodName, request);
+		logRequestStart(LOGGER, methodName, request);
 
 		DomainType domain = request.getDomain();
 
@@ -64,7 +61,7 @@ public class ServiceController {
 		String nodeId = reserveNode();
 		if(nodeId == null) {
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No free nodes found after max number of retries");
-			ControllerHelper.logRequestFinish(LOGGER, methodName, response, request);
+			logRequestFinish(LOGGER, methodName, response, request);
 			return response;
 		}
 
@@ -79,61 +76,25 @@ public class ServiceController {
 			applicationEventPublisher.publishEvent(event);
 
 			LOGGER.info("Invoking an asynchronous method from {}", Thread.currentThread().getName());
-			URI nodeUri = nodeRegistry.getUriForNode(nodeId);
+			URI nodeUri = getNodeRegistry().getUriForNode(nodeId);
 			dataPreparationService.prepareAndPackageData(nodeId, nodeUri, request);
 
 			response = ResponseEntity.ok("Data accepted, computation submitted");
 		}
 		else {
 			LOGGER.info("Freeing node {} because validation failed", nodeId);
-			nodeRegistry.occupyNode(nodeId);
-			nodeRegistry.freeNode(nodeId);
+			getNodeRegistry().occupyNode(nodeId);
+			getNodeRegistry().freeNode(nodeId);
 		}
 
-		ControllerHelper.logRequestFinish(LOGGER, methodName, response, request);
+		logRequestFinish(LOGGER, methodName, response, request);
 		return response;
-	}
-
-	protected String reserveNode() {
-		LOGGER.info("Trying to reserve a node...");
-		final int maxRetryCount = controllerProperties.getController().getRetryCount();
-
-		String nodeId = null;
-		int i = 0;
-
-		do {
-			nodeId = nodeRegistry.reserveNode();
-			LOGGER.info("Reserved node is {}", nodeId);
-
-			if(nodeId == null) {
-				i++;
-				waitForRetry();
-			}
-		}
-		while(nodeId == null && i < maxRetryCount);
-
-		if(nodeId == null) {
-			LOGGER.info("No free nodes found after {} retries", maxRetryCount);
-		}
-
-		return nodeId;
-	}
-
-	private void waitForRetry() {
-		try {
-			long retryDelay = controllerProperties.getController().getRetryDelay();
-			LOGGER.info("Waiting for {} ms before retrying", retryDelay);
-			Thread.sleep(retryDelay);
-		}
-		catch(InterruptedException e) {
-			LOGGER.error(e.getMessage(), e);
-		}
 	}
 
 	protected ResponseEntity<Object> validateData(String nodeId, Payload payload) throws URISyntaxException {
 		LOGGER.info("Validating data - using node {}; data package = {}", nodeId, payload);
 
-		URI nodeUri = nodeRegistry.getUriForNode(nodeId);
+		URI nodeUri = getNodeRegistry().getUriForNode(nodeId);
 		URI uri = new URI(nodeUri + VALIDATE_DATA_PATH);
 		HttpEntity<Payload> entity = (HttpEntity<Payload>) ControllerHelper.createHttpEntity(payload);
 

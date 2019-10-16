@@ -34,22 +34,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-public class ResultController implements ApplicationListener<AbstractDataWorkflowEvent> {
+public class ResultController extends AbstractController implements ApplicationListener<AbstractDataWorkflowEvent> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
 
 	private static final String ACCUMULATE_RESULTS_PATH = "/accumulateResults";
 
-	private final NodeRegistry nodeRegistry;
-	private final ControllerProperties controllerProperties;
 	private final RestTemplate restTemplate;
 
 	private Map<DomainType, RequestProtocol> protocolMap = new ConcurrentHashMap<>();
 
 	@Autowired
 	public ResultController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties/*, RestTemplate restTemplate*/) {
-		this.nodeRegistry = nodeRegistry;
-		this.controllerProperties = controllerProperties;
+		super(nodeRegistry, controllerProperties);
 //		this.restTemplate = restTemplate; // TODO RestTemplate causes cyclic dependency in Spring
 		this.restTemplate = new RestTemplate();
 	}
@@ -90,7 +87,7 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 	@GetMapping("/status/{domain}")
 	public ComputationStatus getStatus(@PathVariable("domain") String domain) {
 		final String methodName = "getStatus";
-		ControllerHelper.logRequestStart(LOGGER, methodName, domain);
+		logRequestStart(LOGGER, methodName, domain);
 
 		ControllerHelper.checkParameter(domain);
 		DomainType domainType = ControllerHelper.getDomainTypeFromParameter(domain);
@@ -130,14 +127,14 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 
 		final ComputationStatus result = new ComputationStatus(status, percentDone, packagesTodo);
 
-		ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+		logRequestFinish(LOGGER, methodName, result, domain);
 		return result;
 	}
 
 	@GetMapping("/result/{domain}")
 	public ResponseEntity<Object> getResult(@PathVariable("domain") String domain) throws URISyntaxException {
 		final String methodName = "getResult";
-		ControllerHelper.logRequestStart(LOGGER, methodName, domain);
+		logRequestStart(LOGGER, methodName, domain);
 
 		ControllerHelper.checkParameter(domain);
 		DomainType domainType = ControllerHelper.getDomainTypeFromParameter(domain);
@@ -147,7 +144,7 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		if(Status.DONE != status.getStatus() && Status.FAILED != status.getStatus()) {
 			final ComputationResult result = new ComputationResult(status.getStatus(), "Computation not done yet");
 
-			ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+			logRequestFinish(LOGGER, methodName, result, domain);
 			return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(result);
 		}
 
@@ -155,7 +152,7 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		if(protocol == null || protocol.getWorkPackageResults() == null || protocol.getWorkPackageResults().isEmpty()) {
 			final ComputationResult result = new ComputationResult(status.getStatus(), "No results found");
 
-			ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+			logRequestFinish(LOGGER, methodName, result, domain);
 			return ResponseEntity.status(HttpStatus.OK).body(result);
 		}
 		LOGGER.info("Protocol for domain {} contains {} results", domainType, protocol.getWorkPackageResults().size());
@@ -163,11 +160,11 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		String nodeId = reserveNode();
 		if(nodeId == null) {
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No free nodes found after max number of retries");
-			ControllerHelper.logRequestFinish(LOGGER, methodName, response, domain);
+			logRequestFinish(LOGGER, methodName, response, domain);
 			return response;
 		}
 
-		URI nodeUri = nodeRegistry.getUriForNode(nodeId);
+		URI nodeUri = getNodeRegistry().getUriForNode(nodeId);
 		URI uri = new URI(nodeUri + ACCUMULATE_RESULTS_PATH);
 		LOGGER.info("Node-URI to be called: {}", uri);
 
@@ -176,7 +173,7 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 
 		HttpEntity<ResultsProtocol> entity = (HttpEntity<ResultsProtocol>) ControllerHelper.createHttpEntity(resultsProtocol);
 
-		nodeRegistry.occupyNode(nodeId);
+		getNodeRegistry().occupyNode(nodeId);
 		ResponseEntity<ComputationResult> response = restTemplate.exchange(uri, HttpMethod.POST, entity, ComputationResult.class);
 
 		ComputationResult result = response.getBody();
@@ -186,9 +183,9 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 			protocolMap.remove(domainType);
 		}
 
-		nodeRegistry.freeNode(nodeId);
+		getNodeRegistry().freeNode(nodeId);
 
-		ControllerHelper.logRequestFinish(LOGGER, methodName, result, domain);
+		logRequestFinish(LOGGER, methodName, result, domain);
 		return ResponseEntity.status(HttpStatus.OK).body(result);
 	}
 
@@ -197,7 +194,7 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		resultsProtocol.setPreparationTime(protocol.getComputationRequest().getPreparationTime());
 		resultsProtocol.setNumberWPs(protocol.getWorkPackages().size());
 		resultsProtocol.setNumberNodesStart(protocol.getComputationRequest().getNumberNodesStart());
-		resultsProtocol.setNumberNodesEnd(nodeRegistry.getNumberOfNodes());
+		resultsProtocol.setNumberNodesEnd(getNodeRegistry().getNumberOfNodes());
 
 		long latestFinishTimestamp = 0;
 		long minWpTime = Long.MAX_VALUE;
@@ -221,43 +218,6 @@ public class ResultController implements ApplicationListener<AbstractDataWorkflo
 		resultsProtocol.setMinWpTime(minWpTime);
 		resultsProtocol.setMaxWpTime(maxWpTime);
 		resultsProtocol.setAvgWpTime(wpSum / protocol.getWorkPackageResults().size());
-	}
-
-	// TODO copied from ServiceController --> unify
-	protected String reserveNode() {
-		LOGGER.info("Trying to reserve a node...");
-		final int maxRetryCount = controllerProperties.getController().getRetryCount();
-
-		String nodeId = null;
-		int i = 0;
-
-		do {
-			nodeId = nodeRegistry.reserveNode();
-			LOGGER.info("Reserved node is {}", nodeId);
-
-			if(nodeId == null) {
-				i++;
-				waitForRetry();
-			}
-		}
-		while(nodeId == null && i < maxRetryCount);
-
-		if(nodeId == null) {
-			LOGGER.info("No free nodes found after {} retries", maxRetryCount);
-		}
-
-		return nodeId;
-	}
-
-	private void waitForRetry() {
-		try {
-			long retryDelay = controllerProperties.getController().getRetryDelay();
-			LOGGER.info("Waiting for {} ms before retrying", retryDelay);
-			Thread.sleep(retryDelay);
-		}
-		catch(InterruptedException e) {
-			LOGGER.error(e.getMessage(), e);
-		}
 	}
 
 	protected RequestProtocol getProtocolForDomain(DomainType domainType) {
