@@ -3,75 +3,50 @@ package no.siriuslabs.computationapi.service;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
-import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
-import no.siriuslabs.computationapi.controller.ControllerHelper;
 import no.siriuslabs.computationapi.event.ResultUpdateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class ComputationJobService {
+public class ComputationJobService extends AbstractAsynchService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ComputationJobService.class);
 
-	public static final String SERVICE_PATH = "/runComputation";
-
-	private final NodeRegistry nodeRegistry;
-	private final RestTemplate restTemplate;
-	private final ApplicationEventPublisher applicationEventPublisher;
+	protected static final String SERVICE_PATH = "/runComputation";
 
 	@Autowired
-	public ComputationJobService(NodeRegistry nodeRegistry/*, RestTemplate restTemplate*/, ApplicationEventPublisher applicationEventPublisher) {
-		this.nodeRegistry = nodeRegistry;
-//		this.restTemplate = restTemplate; // TODO RestTemplate causes cyclic dependency in Spring - check how to test without injecting...
-		restTemplate = new RestTemplate();
-		this.applicationEventPublisher = applicationEventPublisher;
+	public ComputationJobService(NodeRegistry nodeRegistry, ApplicationEventPublisher applicationEventPublisher) {
+		super(nodeRegistry, applicationEventPublisher);
+	}
+
+	@Override
+	protected String getServicePath() {
+		return SERVICE_PATH;
 	}
 
 	@Async
 	public void runComputation(String nodeId, URI nodeUri, WorkPackage workPackage) throws URISyntaxException {
 		LOGGER.info("Executing asynchronously in thread {}", Thread.currentThread().getName());
 
-		long starttime = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 
-		nodeRegistry.occupyNode(nodeId);
-
-		URI uri = new URI(nodeUri + SERVICE_PATH);
-		HttpEntity<ComputationRequest> entity = (HttpEntity<ComputationRequest>) ControllerHelper.createHttpEntity(workPackage);
-
-		LOGGER.info("Service to be called @ {} with parameters: {}", uri, workPackage);
-
-		ResponseEntity<Object> response = restTemplate.exchange(uri, HttpMethod.POST, entity, Object.class);
-
-		HttpStatus statusCode = response.getStatusCode();
-		LOGGER.info("Service call result=" + statusCode);
-
-		nodeRegistry.freeNode(nodeId);
+		ResponseEntity<Object> response = callNodeWebservice(nodeId, nodeUri, workPackage);
 
 		WorkPackageResult result = getResultFromResponse(response);
-		result.setNodeId(nodeId);
-		final long endtime = System.currentTimeMillis();
-		result.setFinishedTimestamp(endtime);
-		result.setRunningTime(endtime - starttime);
-		LOGGER.info("Computation on node {} took {} ms", nodeId, endtime - starttime);
+		addStatsToResult(nodeId, startTime, result);
 
 		ResultUpdateEvent event = new ResultUpdateEvent(this, result);
 		LOGGER.info("Publishing event: {}", event);
-		applicationEventPublisher.publishEvent(event);
+		getApplicationEventPublisher().publishEvent(event);
 
 		LOGGER.info("Asynchronous execution finished");
 	}
@@ -89,6 +64,14 @@ public class ComputationJobService {
 		result.setData(data);
 
 		return result;
+	}
+
+	private void addStatsToResult(String nodeId, long startTime, WorkPackageResult result) {
+		result.setNodeId(nodeId);
+		final long finishTime = System.currentTimeMillis();
+		result.setFinishedTimestamp(finishTime);
+		result.setRunningTime(finishTime - startTime);
+		LOGGER.info("Computation on node {} took {} ms", nodeId, finishTime - startTime);
 	}
 
 }
