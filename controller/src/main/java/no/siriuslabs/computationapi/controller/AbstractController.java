@@ -1,5 +1,6 @@
 package no.siriuslabs.computationapi.controller;
 
+import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.config.ControllerProperties;
 import no.siriuslabs.computationapi.service.NodeRegistry;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public abstract class AbstractController {
 		return nodeRegistry;
 	}
 
-	protected String reserveNode() {
+	protected String reserveNode(DomainType domainType) {
 		LOGGER.info("Trying to reserve a node...");
 		final int maxRetryCount = controllerProperties.getController().getRetryCount();
 
@@ -37,7 +38,7 @@ public abstract class AbstractController {
 		int i = 0;
 
 		do {
-			nodeId = nodeRegistry.reserveNode();
+			nodeId = nodeRegistry.reserveNode(domainType);
 			LOGGER.info("Reserved node is {}", nodeId);
 
 			if(nodeId == null) {

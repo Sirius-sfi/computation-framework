@@ -1,5 +1,6 @@
 package no.siriuslabs.computationapi.controller;
 
+import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.config.Controller;
 import no.siriuslabs.computationapi.api.model.request.Payload;
 import no.siriuslabs.computationapi.config.ControllerProperties;
@@ -61,10 +62,10 @@ public class ServiceControllerTest {
 		controller.setRetryDelay(10);
 		Mockito.when(controllerProperties.getController()).thenReturn(controller);
 
-		String resultNodeId = serviceController.reserveNode();
+		String resultNodeId = serviceController.reserveNode(DomainType.DEMO);
 
 		assertNull(resultNodeId, "Node ID expected to be null after failed reservation of node");
-		Mockito.verify(nodeRegistry, Mockito.times(retryCount)).reserveNode();
+		Mockito.verify(nodeRegistry, Mockito.times(retryCount)).reserveNode(DomainType.DEMO);
 	}
 
 	@DisplayName("Test reserveNode() with successfully reserving a node")
@@ -76,12 +77,12 @@ public class ServiceControllerTest {
 		Mockito.when(controllerProperties.getController()).thenReturn(controller);
 
 		final String reservedNodeID = "reservedNodeID";
-		Mockito.when(nodeRegistry.reserveNode()).thenReturn(reservedNodeID);
+		Mockito.when(nodeRegistry.reserveNode(DomainType.DEMO)).thenReturn(reservedNodeID);
 
-		String resultNodeId = serviceController.reserveNode();
+		String resultNodeId = serviceController.reserveNode(DomainType.DEMO);
 
 		assertEquals(reservedNodeID, resultNodeId, "Node ID expected to be " + reservedNodeID + " after successful reservation");
-		Mockito.verify(nodeRegistry, Mockito.times(1)).reserveNode();
+		Mockito.verify(nodeRegistry, Mockito.times(1)).reserveNode(DomainType.DEMO);
 	}
 
 	@DisplayName("Test validateData() with successful validation result")

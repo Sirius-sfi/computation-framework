@@ -1,8 +1,9 @@
 package no.siriuslabs.computationapi.service;
 
+import no.siriuslabs.computationapi.ControllerApplication;
+import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.node.NodeStatus;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
-import no.siriuslabs.computationapi.ControllerApplication;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -145,19 +146,43 @@ public class NodeRegistryTest {
 
 
 		// reserve a node - it should be one of the two "ready nodes"
-		String reservedID1 = nodeRegistry.reserveNode();
+		String reservedID1 = nodeRegistry.reserveNode(DomainType.DEMO);
 		assertTrue(readyNode1.getId().equals(reservedID1) || readyNode2.getId().equals(reservedID1), "ID of reserved node not in expected range");
 
 
 		// reserve another node - it should be the remaining one of the "ready nodes"
-		String reservedID2 = nodeRegistry.reserveNode();
+		String reservedID2 = nodeRegistry.reserveNode(DomainType.DEMO);
 		assertTrue(readyNode1.getId().equals(reservedID2) || readyNode2.getId().equals(reservedID2), "ID of reserved node not in expected range");
 		assertNotEquals(reservedID1, reservedID2, "The ID of an already reserved node must not be chosen again");
 
 
 		// try to reserve a 3rd time - there are no ready nodes left, so we should not get any node back
-		String reservedID3 = nodeRegistry.reserveNode();
+		String reservedID3 = nodeRegistry.reserveNode(DomainType.DEMO);
 		assertNull(reservedID3, "A node was reserved even though there cannot be any free nodes left");
+	}
+
+	@DisplayName("Test if reserving nodes works correctly for given domains")
+	@Test
+	public void testReserveNodeByDomain() {
+		NodeRegistry nodeRegistry = new NodeRegistry();
+
+		WorkerNode otherDomainNode = createWorkerNode("otherDomain");
+		otherDomainNode.setDomainType(null); // TODO replace by better test domain type
+		nodeRegistry.registerNode(otherDomainNode);
+		otherDomainNode.setStatus(NodeStatus.READY);
+
+		WorkerNode rightDomainNode = createWorkerNode("rightDomain");
+		nodeRegistry.registerNode(rightDomainNode);
+		rightDomainNode.setStatus(NodeStatus.BUSY);
+
+
+		String firstTry = nodeRegistry.reserveNode(DomainType.DEMO);
+		assertNull(firstTry, "Node was reserved even though no node of correct domain was available");
+
+		nodeRegistry.freeNode(rightDomainNode.getId());
+
+		String secondTry = nodeRegistry.reserveNode(DomainType.DEMO);
+		assertEquals(rightDomainNode.getId(), secondTry, "Wrong or no node was reserved, even though only one matching node was available");
 	}
 
 	@DisplayName("Test retrieving the URI property of existing and non-existing nodes")
@@ -188,6 +213,7 @@ public class NodeRegistryTest {
 	private WorkerNode createWorkerNode(String id) {
 		WorkerNode node = new WorkerNode();
 		node.setId(id);
+		node.setDomainType(DomainType.DEMO);
 		return node;
 	}
 

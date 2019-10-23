@@ -157,7 +157,7 @@ public class ResultController extends AbstractController implements ApplicationL
 		}
 		LOGGER.info("Protocol for domain {} contains {} results", domainType, protocol.getWorkPackageResults().size());
 
-		String nodeId = reserveNode();
+		String nodeId = reserveNode(domainType);
 		if(nodeId == null) {
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No free nodes found after max number of retries");
 			logRequestFinish(LOGGER, methodName, response, domain);

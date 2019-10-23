@@ -58,7 +58,7 @@ public class ServiceController extends AbstractController {
 
 		// TODO check status (task, not node usage) - if busy with that domain --> fail
 
-		String nodeId = reserveNode();
+		String nodeId = reserveNode(domain);
 		if(nodeId == null) {
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No free nodes found after max number of retries");
 			logRequestFinish(LOGGER, methodName, response, request);

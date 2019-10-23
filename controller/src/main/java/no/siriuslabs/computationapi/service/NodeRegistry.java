@@ -1,5 +1,6 @@
 package no.siriuslabs.computationapi.service;
 
+import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.node.NodeStatus;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
 import org.slf4j.Logger;
@@ -71,8 +72,8 @@ public class NodeRegistry {
 		}
 	}
 
-	public String reserveNode() {
-		WorkerNode freeNode = workerNodes.values().stream().filter((WorkerNode node) -> NodeStatus.READY == node.getStatus()).findFirst().orElse(null);
+	public String reserveNode(DomainType domainType) {
+		WorkerNode freeNode = workerNodes.values().stream().filter((WorkerNode node) -> (NodeStatus.READY == node.getStatus()) && (node.getDomainType() == domainType)).findFirst().orElse(null);
 
 		if(freeNode == null) {
 			return null;

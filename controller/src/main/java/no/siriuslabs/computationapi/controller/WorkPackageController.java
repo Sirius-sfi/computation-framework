@@ -150,7 +150,7 @@ public class WorkPackageController extends AbstractController implements Applica
 
 	private void distributeWorkToNodes(ConcurrentLinkedQueue<WorkPackage> queue) throws URISyntaxException {
 		while(true) {
-			String nodeId = getNodeRegistry().reserveNode();
+			String nodeId = getNodeRegistry().reserveNode(domain);
 			LOGGER.info("Reserved node {} to do some work", nodeId);
 
 			if(nodeId == null) {
