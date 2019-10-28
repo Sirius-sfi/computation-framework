@@ -1,6 +1,7 @@
 package no.siriuslabs.computationapi.controller;
 
 import no.siriuslabs.computationapi.api.exception.InvalidParameterException;
+import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
 import no.siriuslabs.computationapi.config.ControllerProperties;
 import no.siriuslabs.computationapi.service.NodeRegistry;
@@ -78,6 +79,22 @@ public class NodeController extends AbstractController {
 		getNodeRegistry().unregisterNode(id);
 
 		logVoidRequestFinish(LOGGER, methodName, id);
+	}
+
+	@GetMapping("activeDomain")
+	public String getActiveDomain() {
+		final String methodName = "getNodeList";
+		logRequestStart(LOGGER, methodName);
+
+		final DomainType domain = getNodeRegistry().getDomain();
+		String result = domain == null ? null : domain.name();
+
+		logRequestFinish(LOGGER, methodName, result);
+		return result;
+	}
+
+	public void setDomain(DomainType domain) {
+		getNodeRegistry().setDomain(domain);
 	}
 
 	public void pingNodes() {

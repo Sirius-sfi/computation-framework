@@ -15,11 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = ControllerApplication.class)
 @ActiveProfiles("test")
@@ -76,6 +72,32 @@ public class NodeRegistryTest {
 		assertEquals(2, nodeRegistry.getNumberOfNodes(), "2nd WorkerNode was not added to registry as expected");
 		assertTrue(nodeRegistry.hasNode(anotherIdNode.getId()), "2nd WorkerNode was not added to registry as expected");
 		assertTrue(nodeRegistry.hasNode(node.getId()), "Adding 2nd WorkerNode must not remove existing nodes");
+	}
+
+	@DisplayName("Test registering nodes in relation to the set domain")
+	@Test
+	public void testRegisterNode_Domain() {
+		// try to add a node with the 'wrong' domain for a registry
+		NodeRegistry domainNodeRegistry = new NodeRegistry();
+		domainNodeRegistry.setDomain(DomainType.GEO_ASSISTANT);
+
+		WorkerNode node = createWorkerNode("someID");
+
+		assertThrows(IllegalArgumentException.class, () -> { domainNodeRegistry.registerNode(node); });
+
+
+		// make sure a registry is initialized without a domain set
+		NodeRegistry nodeRegistry = new NodeRegistry();
+		assertNull(nodeRegistry.getDomain());
+
+		// if no domain is set yet, the domain from first node registered is set as active domain
+		nodeRegistry.registerNode(node);
+		assertEquals(DomainType.DEMO, nodeRegistry.getDomain(), "Domain of domain-less NodeRegistry did not change to first node's set domain");
+
+		WorkerNode anotherIdNode = createWorkerNode("someOtherID");
+
+		nodeRegistry.registerNode(anotherIdNode);
+		assertEquals(2, nodeRegistry.getNumberOfNodes());
 	}
 
 	@DisplayName("Test removing a node from the empty registry")

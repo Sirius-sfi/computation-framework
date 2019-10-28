@@ -61,7 +61,7 @@ public class ControllerApplication {
 			else {
 				// TODO rework for multi-domains later
 				DomainType domain = ControllerHelper.getDomainTypeFromParameter(args[0]);
-				workPackageController.setDomain(domain);
+				nodeController.setDomain(domain);
 			}
 
 			LOGGER.info("Setting up timers");

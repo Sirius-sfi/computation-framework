@@ -19,6 +19,10 @@ public class NodeRegistry {
 
 	private ConcurrentHashMap<String, WorkerNode> workerNodes = new ConcurrentHashMap<>(5);
 
+	// TODO rework for multi-domains later
+	// TODO offer service to set/add/remove domains?
+	private DomainType domain;
+
 	public boolean hasNodes() {
 		return !workerNodes.isEmpty();
 	}
@@ -52,14 +56,24 @@ public class NodeRegistry {
 
 	public void registerNode(WorkerNode node) {
 		LOGGER.info("Register node {}", node);
-		if(!hasNode(node)) {
+		if(hasNode(node)) {
+			LOGGER.info("Node {} already registered: {}", node, workerNodes.get(node.getId()));
+		}
+		else {
+			if(getDomain() == null) {
+				LOGGER.info("Domain not set - accepting node's domain {}", node.getDomainType());
+				setDomain(node.getDomainType());
+			}
+			else if(getDomain() != node.getDomainType()) {
+				final String message = "Node " + node.getId() + " has set a domain type different from the controller (" + node.getDomainType() + " <> " + getDomain() + ')';
+				LOGGER.info(message);
+				throw new IllegalArgumentException(message);
+			}
+
 			node.setStatus(NodeStatus.READY);
 			workerNodes.put(node.getId(), node);
 
 			LOGGER.info("Node registered as {} and status changed to {}", node.getId(), NodeStatus.READY);
-		}
-		else {
-			LOGGER.info("Node {} already registered: {}", node, workerNodes.get(node.getId()));
 		}
 	}
 
@@ -130,6 +144,14 @@ public class NodeRegistry {
 
 		node.setStatus(NodeStatus.READY);
 		LOGGER.info("Node {} status changed to {}", node.getId(), node.getStatus());
+	}
+
+	public synchronized DomainType getDomain() {
+		return domain;
+	}
+
+	public synchronized void setDomain(DomainType domain) {
+		this.domain = domain;
 	}
 
 	public void pingAllNodes() {

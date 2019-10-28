@@ -37,10 +37,6 @@ public class WorkPackageController extends AbstractController implements Applica
 	private final ConcurrentHashMap<DomainType, ConcurrentLinkedQueue<WorkPackage>> workToDo;
 	private final ConcurrentHashMap<Long, Pair<WorkPackage, String>> runningWorkPackages;
 
-	// TODO rework for multi-domains later
-	// TODO offer service to set/add/remove domains?
-	private DomainType domain;
-
 	@Autowired
 	public WorkPackageController(NodeRegistry nodeRegistry, ComputationJobService computationJobService, ControllerProperties controllerProperties, ResultController resultController) {
 		super(nodeRegistry, controllerProperties);
@@ -79,8 +75,9 @@ public class WorkPackageController extends AbstractController implements Applica
 
 	public void distributeWork() {
 		final String methodName = "distributeWork";
-		logRequestStart(LOGGER, methodName, domain);
+		logRequestStart(LOGGER, methodName);
 		try {
+			final DomainType domain = getNodeRegistry().getDomain();
 			if(domain == null) {
 				LOGGER.warn("Domain is not set");
 				return;
@@ -110,6 +107,7 @@ public class WorkPackageController extends AbstractController implements Applica
 	}
 
 	private void handleLostPackages() {
+		final DomainType domain = getNodeRegistry().getDomain();
 		RequestProtocol protocol = resultController.getProtocolForDomain(domain);
 		final int numberOfPackages = protocol.getWorkPackages().size();
 		final int numberOfResults = protocol.getWorkPackageResults().size();
@@ -150,7 +148,7 @@ public class WorkPackageController extends AbstractController implements Applica
 
 	private void distributeWorkToNodes(ConcurrentLinkedQueue<WorkPackage> queue) throws URISyntaxException {
 		while(true) {
-			String nodeId = getNodeRegistry().reserveNode(domain);
+			String nodeId = getNodeRegistry().reserveNode(getNodeRegistry().getDomain());
 			LOGGER.info("Reserved node {} to do some work", nodeId);
 
 			if(nodeId == null) {
@@ -176,18 +174,4 @@ public class WorkPackageController extends AbstractController implements Applica
 		}
 	}
 
-	@GetMapping("activeDomain")
-	public String getActiveDomain() {
-		final String methodName = "getNodeList";
-		logRequestStart(LOGGER, methodName);
-
-		String result = domain == null ? null : domain.name();
-
-		logRequestFinish(LOGGER, methodName, result);
-		return result;
-	}
-
-	public void setDomain(DomainType domain) {
-		this.domain = domain;
-	}
 }
