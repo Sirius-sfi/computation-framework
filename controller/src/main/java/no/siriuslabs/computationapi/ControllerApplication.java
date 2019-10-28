@@ -56,12 +56,13 @@ public class ControllerApplication {
 		return (String... args) -> {
 			LOGGER.info("Start-up arguments: {}", args);
 			if(args.length == 0) {
-				throw new IllegalArgumentException("Arguments list is empty. Must contain domain for controller!");
+				LOGGER.info("No domain set on start-up");
 			}
-
-			// TODO rework for multi-domains later
-			DomainType domain = ControllerHelper.getDomainTypeFromParameter(args[0]);
-			workPackageController.setDomain(domain);
+			else {
+				// TODO rework for multi-domains later
+				DomainType domain = ControllerHelper.getDomainTypeFromParameter(args[0]);
+				workPackageController.setDomain(domain);
+			}
 
 			LOGGER.info("Setting up timers");
 			setupPingTimer();
