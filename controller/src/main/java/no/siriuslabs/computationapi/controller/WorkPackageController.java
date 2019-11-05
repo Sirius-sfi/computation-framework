@@ -42,7 +42,7 @@ public class WorkPackageController extends AbstractController implements Applica
 		super(nodeRegistry, controllerProperties);
 		this.computationJobService = computationJobService;
 		this.resultController = resultController;
-		workToDo = new ConcurrentHashMap<>(DomainType.values().length);
+		workToDo = new ConcurrentHashMap<>(5);
 		runningWorkPackages = new ConcurrentHashMap<>();
 	}
 
@@ -112,7 +112,7 @@ public class WorkPackageController extends AbstractController implements Applica
 		final int numberOfPackages = protocol.getWorkPackages().size();
 		final int numberOfResults = protocol.getWorkPackageResults().size();
 
-		if(resultController.getStatus(domain.name()).getPackagesToDo() > 0 && numberOfPackages != numberOfResults) {
+		if(resultController.getStatus(domain.getDomainType()).getPackagesToDo() > 0 && numberOfPackages != numberOfResults) {
 			LOGGER.info("Possible lost packages found --> # WPs={} / # Results={} / # active={}", numberOfPackages, numberOfResults, runningWorkPackages.size());
 			List<WorkPackage> packagesToDo = new ArrayList<>(protocol.getWorkPackages());
 

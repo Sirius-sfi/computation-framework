@@ -2,6 +2,7 @@ package no.siriuslabs.computationapi.controller;
 
 import no.siriuslabs.computationapi.api.exception.InvalidParameterException;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
+import no.siriuslabs.computationapi.model.TestDomainType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,24 +52,15 @@ public class ControllerHelperTest {
 	public void testGetDomainTypeFromParameter_NullValue() {
 		// try with null value
 		Exception thrown = assertThrows(InvalidParameterException.class, () -> { ControllerHelper.getDomainTypeFromParameter(null); }, "Null as parameter value is expected to throw exception");
-		assertEquals(ControllerHelper.UNKNOWN_OR_UNSUPPORTED_DOMAIN_TEXT + null, thrown.getMessage());
-	}
-
-	@DisplayName("Test getDomainTypeFromParameter() with non-enum value")
-	@Test
-	public void testGetDomainTypeFromParameter_Unknown() {
-		// try something not in the enum
-		final String parameterValue = "not there";
-		Exception thrown = assertThrows(InvalidParameterException.class, () -> { ControllerHelper.getDomainTypeFromParameter(parameterValue); }, "Parameter value not present in the enum is expected to throw exception");
-		assertEquals(ControllerHelper.UNKNOWN_OR_UNSUPPORTED_DOMAIN_TEXT + parameterValue, thrown.getMessage());
+		assertEquals(ControllerHelper.DOMAIN_MUST_NOT_BE_EMPTY_TEXT + null, thrown.getMessage());
 	}
 
 	@DisplayName("Test getDomainTypeFromParameter() with valid value")
 	@Test
 	public void testGetDomainTypeFromParameter_Valid() {
 		// try a valid enum element
-		DomainType result = ControllerHelper.getDomainTypeFromParameter(DomainType.DEMO.toString().toLowerCase());
-		assertEquals(DomainType.DEMO, result);
+		DomainType result = ControllerHelper.getDomainTypeFromParameter(TestDomainType.TEST_1.toString().toLowerCase());
+		assertEquals(TestDomainType.TEST_1.getDomainType(), result.getDomainType());
 	}
 
 }

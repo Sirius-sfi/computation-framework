@@ -2,13 +2,14 @@ package no.siriuslabs.computationapi.controller;
 
 import no.siriuslabs.computationapi.api.exception.InvalidParameterException;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
+import no.siriuslabs.computationapi.api.model.computation.DomainTypeImpl;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 
 public final class ControllerHelper {
 	
 	public static final String PARAMETER_MUST_NOT_BE_EMPTY_TEXT = "Parameter must not be empty";
-	public static final String UNKNOWN_OR_UNSUPPORTED_DOMAIN_TEXT = "Unknown or unsupported domain ";
+	public static final String DOMAIN_MUST_NOT_BE_EMPTY_TEXT = "Domain parameter must not be empty";
 
 	private ControllerHelper() {
 	}
@@ -21,15 +22,10 @@ public final class ControllerHelper {
 
 	public static DomainType getDomainTypeFromParameter(String domain) {
 		if(domain == null) {
-			throw new InvalidParameterException(UNKNOWN_OR_UNSUPPORTED_DOMAIN_TEXT + domain);
+			throw new InvalidParameterException(DOMAIN_MUST_NOT_BE_EMPTY_TEXT + domain);
 		}
 
-		try {
-			return DomainType.valueOf(domain.toUpperCase());
-		}
-		catch(IllegalArgumentException e) {
-			throw new InvalidParameterException(UNKNOWN_OR_UNSUPPORTED_DOMAIN_TEXT + domain);
-		}
+		return new DomainTypeImpl(domain.toUpperCase());
 	}
 
 	public static HttpEntity<?> createHttpEntity(Object parameterData) {

@@ -1,5 +1,8 @@
 package no.siriuslabs.computationapi.api.model.computation;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,6 +10,8 @@ import java.util.List;
 
 public class ResultsProtocol {
 
+	@JsonSerialize(converter = DomainTypeToStringConverter.class)
+	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domain;
 
 	private long startedTimestamp;

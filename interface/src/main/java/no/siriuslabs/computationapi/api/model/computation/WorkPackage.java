@@ -1,11 +1,17 @@
 package no.siriuslabs.computationapi.api.model.computation;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.Map;
 import java.util.Objects;
 
 public class WorkPackage {
 
+	@JsonSerialize(converter = DomainTypeToStringConverter.class)
+	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domain;
+
 	private long runId;
 	private long id;
 
@@ -65,7 +71,7 @@ public class WorkPackage {
 		WorkPackage that = (WorkPackage) o;
 		return runId == that.runId &&
 				id == that.id &&
-				domain == that.domain;
+				Objects.equals(domain, that.domain);
 	}
 
 	@Override

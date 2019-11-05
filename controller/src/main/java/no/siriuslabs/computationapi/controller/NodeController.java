@@ -87,7 +87,7 @@ public class NodeController extends AbstractController {
 		logRequestStart(LOGGER, methodName);
 
 		final DomainType domain = getNodeRegistry().getDomain();
-		String result = domain == null ? null : domain.name();
+		String result = domain == null ? null : domain.getDomainType();
 
 		logRequestFinish(LOGGER, methodName, result);
 		return result;

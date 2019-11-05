@@ -4,6 +4,7 @@ import no.siriuslabs.computationapi.ControllerApplication;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.node.NodeStatus;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
+import no.siriuslabs.computationapi.model.TestDomainType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ public class NodeRegistryTest {
 	public void testRegisterNode_Domain() {
 		// try to add a node with the 'wrong' domain for a registry
 		NodeRegistry domainNodeRegistry = new NodeRegistry();
-		domainNodeRegistry.setDomain(DomainType.GEO_ASSISTANT);
+		domainNodeRegistry.setDomain(TestDomainType.TEST_2);
 
 		WorkerNode node = createWorkerNode("someID");
 
@@ -92,7 +93,7 @@ public class NodeRegistryTest {
 
 		// if no domain is set yet, the domain from first node registered is set as active domain
 		nodeRegistry.registerNode(node);
-		assertEquals(DomainType.DEMO, nodeRegistry.getDomain(), "Domain of domain-less NodeRegistry did not change to first node's set domain");
+		assertEquals(TestDomainType.TEST_1, nodeRegistry.getDomain(), "Domain of domain-less NodeRegistry did not change to first node's set domain");
 
 		WorkerNode anotherIdNode = createWorkerNode("someOtherID");
 
@@ -168,18 +169,18 @@ public class NodeRegistryTest {
 
 
 		// reserve a node - it should be one of the two "ready nodes"
-		String reservedID1 = nodeRegistry.reserveNode(DomainType.DEMO);
+		String reservedID1 = nodeRegistry.reserveNode(TestDomainType.TEST_1);
 		assertTrue(readyNode1.getId().equals(reservedID1) || readyNode2.getId().equals(reservedID1), "ID of reserved node not in expected range");
 
 
 		// reserve another node - it should be the remaining one of the "ready nodes"
-		String reservedID2 = nodeRegistry.reserveNode(DomainType.DEMO);
+		String reservedID2 = nodeRegistry.reserveNode(TestDomainType.TEST_1);
 		assertTrue(readyNode1.getId().equals(reservedID2) || readyNode2.getId().equals(reservedID2), "ID of reserved node not in expected range");
 		assertNotEquals(reservedID1, reservedID2, "The ID of an already reserved node must not be chosen again");
 
 
 		// try to reserve a 3rd time - there are no ready nodes left, so we should not get any node back
-		String reservedID3 = nodeRegistry.reserveNode(DomainType.DEMO);
+		String reservedID3 = nodeRegistry.reserveNode(TestDomainType.TEST_1);
 		assertNull(reservedID3, "A node was reserved even though there cannot be any free nodes left");
 	}
 
@@ -188,22 +189,23 @@ public class NodeRegistryTest {
 	public void testReserveNodeByDomain() {
 		NodeRegistry nodeRegistry = new NodeRegistry();
 
-		WorkerNode otherDomainNode = createWorkerNode("otherDomain");
-		otherDomainNode.setDomainType(null); // TODO replace by better test domain type
-		nodeRegistry.registerNode(otherDomainNode);
-		otherDomainNode.setStatus(NodeStatus.READY);
+		// disabled - makes no sense anymore until multi-domain is supported due to domain-protection in registration logic
+//		WorkerNode otherDomainNode = createWorkerNode("otherDomain");
+//		otherDomainNode.setDomainType(TestDomainType); // TODO replace by better test domain type
+//		nodeRegistry.registerNode(otherDomainNode);
+//		otherDomainNode.setStatus(NodeStatus.READY);
 
 		WorkerNode rightDomainNode = createWorkerNode("rightDomain");
 		nodeRegistry.registerNode(rightDomainNode);
 		rightDomainNode.setStatus(NodeStatus.BUSY);
 
 
-		String firstTry = nodeRegistry.reserveNode(DomainType.DEMO);
+		String firstTry = nodeRegistry.reserveNode(TestDomainType.TEST_1);
 		assertNull(firstTry, "Node was reserved even though no node of correct domain was available");
 
 		nodeRegistry.freeNode(rightDomainNode.getId());
 
-		String secondTry = nodeRegistry.reserveNode(DomainType.DEMO);
+		String secondTry = nodeRegistry.reserveNode(TestDomainType.TEST_1);
 		assertEquals(rightDomainNode.getId(), secondTry, "Wrong or no node was reserved, even though only one matching node was available");
 	}
 
@@ -235,7 +237,7 @@ public class NodeRegistryTest {
 	private WorkerNode createWorkerNode(String id) {
 		WorkerNode node = new WorkerNode();
 		node.setId(id);
-		node.setDomainType(DomainType.DEMO);
+		node.setDomainType(TestDomainType.TEST_1);
 		return node;
 	}
 

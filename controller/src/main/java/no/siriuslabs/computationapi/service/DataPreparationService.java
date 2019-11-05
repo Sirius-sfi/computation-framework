@@ -3,6 +3,7 @@ package no.siriuslabs.computationapi.service;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.request.ComputationRequest;
+import no.siriuslabs.computationapi.controller.ControllerHelper;
 import no.siriuslabs.computationapi.event.DataPreparartionFinishedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class DataPreparationService extends AbstractAsynchService {
 		List<WorkPackage> workPackages = new ArrayList<>(result.size());
 
 		for(Map<String, Object> row : result) {
-			final DomainType domain = DomainType.valueOf((String) row.get("domain"));
+			final DomainType domain = ControllerHelper.getDomainTypeFromParameter((String) row.get("domain"));
 			final Number id = (Number) row.get("id");
 			WorkPackage workPackage = new WorkPackage(domain, id.longValue());
 			workPackage.setRunId((Integer) row.get("runId"));

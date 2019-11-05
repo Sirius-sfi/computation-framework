@@ -1,10 +1,17 @@
 package no.siriuslabs.computationapi.api.model.request;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
+import no.siriuslabs.computationapi.api.model.computation.DomainTypeToStringConverter;
+import no.siriuslabs.computationapi.api.model.computation.StringToDomainTypeConverter;
 
 public class ComputationRequest {
 
+	@JsonSerialize(converter = DomainTypeToStringConverter.class)
+	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domain;
+
 	private Payload payload;
 	private long startedTimestamp;
 	private long preparationTime;

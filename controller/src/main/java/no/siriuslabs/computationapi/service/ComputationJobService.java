@@ -3,6 +3,7 @@ package no.siriuslabs.computationapi.service;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackage;
 import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
+import no.siriuslabs.computationapi.controller.ControllerHelper;
 import no.siriuslabs.computationapi.event.ResultUpdateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class ComputationJobService extends AbstractAsynchService {
 		Map<String, Object> resultMap = (Map<String, Object>) response.getBody();
 
 		Map<String, Object> wpMap = (Map<String, Object>) resultMap.get("workPackage");
-		WorkPackage wp = new WorkPackage(DomainType.valueOf((String) wpMap.get("domain")), ((Number) wpMap.get("id")).longValue());
+		WorkPackage wp = new WorkPackage(ControllerHelper.getDomainTypeFromParameter((String) wpMap.get("domain")), ((Number) wpMap.get("id")).longValue());
 		wp.setRunId((Integer) wpMap.get("runId"));
 		wp.setData((Map<String, Object>) wpMap.get("data"));
 

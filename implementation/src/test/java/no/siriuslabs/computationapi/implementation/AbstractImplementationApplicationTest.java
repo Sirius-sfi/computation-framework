@@ -5,6 +5,7 @@ import no.siriuslabs.computationapi.api.model.config.Controller;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
 import no.siriuslabs.computationapi.implementation.config.ConfigProperties;
 import no.siriuslabs.computationapi.implementation.config.Node;
+import no.siriuslabs.computationapi.implementation.model.TestDomainType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ public class AbstractImplementationApplicationTest {
 	@Test
 	public void testConfigureWorkerNode() throws UnknownHostException {
 		Node node = new Node();
-		node.setDomain(DomainType.DEMO);
+		node.setDomain(TestDomainType.TEST_1);
 
 		Mockito.when(configProperties.getNode()).thenReturn(node);
 
@@ -57,7 +58,7 @@ public class AbstractImplementationApplicationTest {
 
 		assertNotNull(result[0], "configureWorkerNode() is expected to return a non-null value");
 		assertTrue(result[0].getId().contains(InetAddress.getLocalHost().getHostAddress()) || result[0].getId().contains(InetAddress.getLocalHost().getHostName()), "Node's ID is expected to contain host's IP address or host name");
-		assertEquals(DomainType.DEMO, result[0].getDomainType(), "Node's domain type must be as configured above");
+		assertEquals(TestDomainType.TEST_1, result[0].getDomainType(), "Node's domain type must be as configured above");
 	}
 
 	@DisplayName("Test creating the controller's service URI ")

@@ -64,7 +64,7 @@ public class NodeRegistry {
 				LOGGER.info("Domain not set - accepting node's domain {}", node.getDomainType());
 				setDomain(node.getDomainType());
 			}
-			else if(getDomain() != node.getDomainType()) {
+			else if(!getDomain().getDomainType().equals(node.getDomainType().getDomainType())) {
 				final String message = "Node " + node.getId() + " has set a domain type different from the controller (" + node.getDomainType() + " <> " + getDomain() + ')';
 				LOGGER.info(message);
 				throw new IllegalArgumentException(message);
@@ -87,7 +87,8 @@ public class NodeRegistry {
 	}
 
 	public String reserveNode(DomainType domainType) {
-		WorkerNode freeNode = workerNodes.values().stream().filter((WorkerNode node) -> (NodeStatus.READY == node.getStatus()) && (node.getDomainType() == domainType)).findFirst().orElse(null);
+		WorkerNode freeNode = workerNodes.values().stream().filter((WorkerNode node)
+				-> (NodeStatus.READY == node.getStatus()) && (node.getDomainType().getDomainType().equals(domainType.getDomainType()))).findFirst().orElse(null);
 
 		if(freeNode == null) {
 			return null;

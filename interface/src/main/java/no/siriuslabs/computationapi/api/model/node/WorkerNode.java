@@ -1,6 +1,10 @@
 package no.siriuslabs.computationapi.api.model.node;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import no.siriuslabs.computationapi.api.model.computation.DomainType;
+import no.siriuslabs.computationapi.api.model.computation.DomainTypeToStringConverter;
+import no.siriuslabs.computationapi.api.model.computation.StringToDomainTypeConverter;
 
 import java.net.URI;
 import java.util.Date;
@@ -8,7 +12,11 @@ import java.util.Date;
 public class WorkerNode {
 
 	private String id;
+
+	@JsonSerialize(converter = DomainTypeToStringConverter.class)
+	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domainType;
+
 	private URI uri;
 
 	private transient NodeStatus status = NodeStatus.UNAVAILABLE;
