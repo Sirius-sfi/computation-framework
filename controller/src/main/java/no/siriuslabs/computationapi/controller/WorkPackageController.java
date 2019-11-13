@@ -109,6 +109,11 @@ public class WorkPackageController extends AbstractController implements Applica
 	private void handleLostPackages() {
 		final DomainType domain = getNodeRegistry().getDomain();
 		RequestProtocol protocol = resultController.getProtocolForDomain(domain);
+		if(protocol == null) { // protocol might be null even if queue a exists and sent us here if results of previous run have already been collected
+			LOGGER.info("No protocol present --> no lost packages possible");
+			return;
+		}
+
 		final int numberOfPackages = protocol.getWorkPackages().size();
 		final int numberOfResults = protocol.getWorkPackageResults().size();
 

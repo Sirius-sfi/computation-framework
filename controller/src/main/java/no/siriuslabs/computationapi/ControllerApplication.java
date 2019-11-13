@@ -74,7 +74,12 @@ public class ControllerApplication {
 		TimerTask timerTask = new TimerTask() {
 			@Override
 			public void run() {
-				nodeController.pingNodes();
+				try {
+					nodeController.pingNodes();
+				}
+				catch(Exception e) {
+					LOGGER.error(e.getMessage(), e);
+				}
 			}
 		};
 
@@ -87,7 +92,12 @@ public class ControllerApplication {
 		TimerTask timerTask = new TimerTask() {
 			@Override
 			public void run() {
-				workPackageController.distributeWork();
+				try {
+					workPackageController.distributeWork();
+				}
+				catch(Exception e) {
+					LOGGER.error(e.getMessage(), e);
+				}
 			}
 		};
 
