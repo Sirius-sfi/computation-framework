@@ -8,26 +8,63 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Container class representing all results from a computation run plus some statistical data used to report the results back to the caller.<p>
+ * This class is quite similar to RequestProtocol but has the amount of data cut down to only the results for performance reasons.
+ */
 public class ResultsProtocol {
 
+	/**
+	 * Domain type the computation run belongs to.
+	 */
 	@JsonSerialize(converter = DomainTypeToStringConverter.class)
 	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domain;
 
+	/**
+	 * Timestamp the computation run started.
+	 */
 	private long startedTimestamp;
+	/**
+	 * Timestamp the computation run ended.
+	 */
 	private long finishedTimestamp;
 
+	/**
+	 * Amount of time taken to perform the data preparation step (prepareAndPackageData).
+	 */
 	private long preparationTime;
 
+	/**
+	 * Shortest amount of time taken to compute a WorkPackage.
+	 */
 	private long minWpTime;
+	/**
+	 * Longest amount of time taken to compute a WorkPackage.
+	 */
 	private long maxWpTime;
+	/**
+	 * Average amount of time taken to compute a WorkPackage.
+	 */
 	private long avgWpTime;
 
+	/**
+	 * Number of WorkerNodes at the beginning of the computation run (after the preparation step).
+	 */
 	private int numberNodesStart;
+	/**
+	 * Number of WorkerNodes at the end of the computation run (when accumulating the results).
+	 */
 	private int numberNodesEnd;
 
+	/**
+	 * Overall number of WorkPackages.
+	 */
 	private int numberWPs;
 
+	/**
+	 * Results for every WorkPackage that was run on a worker node yet.
+	 */
 	private List<WorkPackageResult> workPackageResults;
 
 	/**
@@ -36,6 +73,9 @@ public class ResultsProtocol {
 	public ResultsProtocol() {
 	}
 
+	/**
+	 * Constructor accepting DomainType and WorkPackageResults.
+	 */
 	public ResultsProtocol(DomainType domain, List<WorkPackageResult> workPackageResults) {
 		this.domain = domain;
 		this.workPackageResults = new ArrayList<>(workPackageResults);
@@ -121,6 +161,9 @@ public class ResultsProtocol {
 		return Collections.unmodifiableList(workPackageResults);
 	}
 
+	/**
+	 * Adds the given results to the total amount of WorkPackageResults available.
+	 */
 	public void addWorkPackageResults(WorkPackageResult... workPackageResults) {
 		this.workPackageResults.addAll(Arrays.asList(workPackageResults));
 	}

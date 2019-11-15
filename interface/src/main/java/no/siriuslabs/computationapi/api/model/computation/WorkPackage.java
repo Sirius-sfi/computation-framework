@@ -6,15 +6,32 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Container class representing a single work package.<p>
+ * A WorkPackage contains information about the DomainType and the ID of the computation run it belongs to, its own unique ID and a collection of domain specific data.
+ */
 public class WorkPackage {
 
+	/**
+	 * Domain type the computation run belongs to.
+	 */
 	@JsonSerialize(converter = DomainTypeToStringConverter.class)
 	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domain;
 
+	/**
+	 * ID of the computation run this package belongs to.
+	 */
 	private long runId;
+
+	/**
+	 * This WorkPackage's unique identifier.
+	 */
 	private long id;
 
+	/**
+	 * Map containing domain specific data needed for the computations.
+	 */
 	private Map<String, Object> data;
 
 	/**
@@ -23,6 +40,9 @@ public class WorkPackage {
 	public WorkPackage() {
 	}
 
+	/**
+	 * Constructor accepting DomainType and work package ID.
+	 */
 	public WorkPackage(DomainType domain, long id) {
 		this.domain = domain;
 		this.id = id;

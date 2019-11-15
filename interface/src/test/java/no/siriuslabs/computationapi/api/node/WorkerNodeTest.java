@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+/**
+ * Set of tests for behaviour of the WorkerNode class.
+ */
 public class WorkerNodeTest {
 
 	@DisplayName("Test node property values after initialization")

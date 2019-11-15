@@ -9,17 +9,37 @@ import no.siriuslabs.computationapi.api.model.computation.StringToDomainTypeConv
 import java.net.URI;
 import java.util.Date;
 
+/**
+ * Container class representing a single worker node and its current state.<p>
+ * The class contains information about the node's unique ID, the DomainType it can support and the URI it can be reached at.
+ * The controller also uses it to keep track of the node's current state and when this state last changed.
+ */
 public class WorkerNode {
 
+	/**
+	 * The node's unique identifier.
+	 */
 	private String id;
 
+	/**
+	 * The DomainType this node can support.
+	 */
 	@JsonSerialize(converter = DomainTypeToStringConverter.class)
 	@JsonDeserialize(converter = StringToDomainTypeConverter.class)
 	private DomainType domainType;
 
+	/**
+	 * The URI which the controller should use to contact this node.
+	 */
 	private URI uri;
 
+	/**
+	 * This node's current status from the controller's point of view.
+	 */
 	private transient NodeStatus status = NodeStatus.UNAVAILABLE;
+	/**
+	 * This node's last status change from the controller's point of view.
+	 */
 	private transient Date lastStatusChange;
 
 	/**

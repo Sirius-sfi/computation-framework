@@ -2,8 +2,14 @@ package no.siriuslabs.computationapi.api.model.request;
 
 import java.util.Map;
 
+/**
+ * Generic container class to encapsulate domain specific data in a ComputationRequest.
+ */
 public class Payload {
 
+	/**
+	 * Map holding the data in key-value pairs
+	 */
 	Map<String, Object> data;
 
 	/**

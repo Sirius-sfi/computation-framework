@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Spring converter class used to convert DomainType instances into a string representation during serialization.
+ */
 public class DomainTypeToStringConverter extends StdConverter<DomainType, String> {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(DomainTypeToStringConverter.class);
 
 	@Override
 	public String convert(DomainType d) {
