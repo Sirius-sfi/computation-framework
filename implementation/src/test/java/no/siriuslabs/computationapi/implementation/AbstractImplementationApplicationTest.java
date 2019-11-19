@@ -1,6 +1,5 @@
 package no.siriuslabs.computationapi.implementation;
 
-import no.siriuslabs.computationapi.api.model.computation.DomainType;
 import no.siriuslabs.computationapi.api.model.config.Controller;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
 import no.siriuslabs.computationapi.implementation.config.ConfigProperties;
@@ -28,6 +27,9 @@ import java.net.UnknownHostException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Set of tests for the logic of the AbstractImplementationApplication class.
+ */
 public class AbstractImplementationApplicationTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractImplementationApplicationTest.class);
@@ -44,6 +46,9 @@ public class AbstractImplementationApplicationTest {
 		application = new AbstractImplementationApplication(configProperties, restTemplate) {};
 	}
 
+	/**
+	 * Tests if a WorkerNode can be created, if the DomainType is correctly set and if the generated node ID contains the machine's IP or host name.
+	 */
 	@DisplayName("Test worker node configuration")
 	@Test
 	public void testConfigureWorkerNode() throws UnknownHostException {
@@ -61,13 +66,15 @@ public class AbstractImplementationApplicationTest {
 		assertEquals(TestDomainType.TEST_1, result[0].getDomainType(), "Node's domain type must be as configured above");
 	}
 
+	/**
+	 * Tests if, when creating a service URI, the application uses the expected parts to build the URI (base part from config + sub path from RegistrationFlavour).
+	 */
 	@DisplayName("Test creating the controller's service URI ")
 	@Test
 	public void testCreateServiceUri() {
-		final String urlString = "http://sirius-labs.no/";
-
 		Controller controller = new Controller();
 		try {
+			final String urlString = "http://sirius-labs.no/";
 			controller.setLocalUrl(new URI(urlString));
 
 			Mockito.when(configProperties.getController()).thenReturn(controller);
@@ -77,11 +84,14 @@ public class AbstractImplementationApplicationTest {
 			assertEquals(urlString + AbstractImplementationApplication.RegistrationFlavour.REGISTER.getServiceSubPath(), result.toString(), "URI is expected to match the URI set above");
 		}
 		catch(URISyntaxException e) {
-			Assertions.fail(e.getMessage());
+			fail(e.getMessage());
 			LOGGER.error(e.getMessage(), e);
 		}
 	}
 
+	/**
+	 * Tests the case where registration with the controller fails (including retries).
+	 */
 	@DisplayName("Test register() without successfully registering with the controller")
 	@Test
 	public void testRegister_NoSuccess() {
@@ -97,6 +107,9 @@ public class AbstractImplementationApplicationTest {
 		assertFalse(application.register(new WorkerNode(), uri), "Failure to register with the controller is expected to produce false");
 	}
 
+	/**
+	 * Tests the case where registration with the controller is successful.
+	 */
 	@DisplayName("Test register() and successfully register with the controller")
 	@Test
 	public void testRegister_Success() {
@@ -112,6 +125,9 @@ public class AbstractImplementationApplicationTest {
 		assertTrue(application.register(new WorkerNode(), uri), "Successful registration with the controller is expected to produce true");
 	}
 
+	/**
+	 * Tests the case where callRegistrationService() produces a RestClientException and a null return instead of a HttpStatus.
+	 */
 	@DisplayName("Test callRegisterService() with RestClientException thrown by the call")
 	@Test
 	public void testCallRegisterService_RestExc() {
@@ -121,6 +137,9 @@ public class AbstractImplementationApplicationTest {
 		assertNull(application.callRegistrationService(AbstractImplementationApplication.RegistrationFlavour.REGISTER, uri, new HttpEntity<>(new WorkerNode())), "Null is expected to be returned after RestClientException in the call");
 	}
 
+	/**
+	 * Tests the case where callRegistrationService() produces a HttpClientErrorException and returns the original HttpStatus.
+	 */
 	@DisplayName("Test callRegisterService() with HttpClientErrorException thrown by the call")
 	@Test
 	public void testCallRegisterService_HttpExc() {
@@ -130,6 +149,9 @@ public class AbstractImplementationApplicationTest {
 		assertEquals(HttpStatus.I_AM_A_TEAPOT, application.callRegistrationService(AbstractImplementationApplication.RegistrationFlavour.REGISTER, uri, new HttpEntity<>(new WorkerNode())), "Exception's status code is expected to be returned after RestClientException in the call");
 	}
 
+	/**
+	 * Tests the case where callRegistrationService() is successful and returns HttpStatus 200.
+	 */
 	@DisplayName("Test callRegisterService() with success and status code 200 (OK)")
 	@Test
 	public void testCallRegisterService_Success() {
@@ -144,7 +166,7 @@ public class AbstractImplementationApplicationTest {
 			return new URI("http://sirius-labs.no");
 		}
 		catch(URISyntaxException e) {
-			Assertions.fail(e.getMessage());
+			fail(e.getMessage());
 			LOGGER.error(e.getMessage(), e);
 		}
 		return null;

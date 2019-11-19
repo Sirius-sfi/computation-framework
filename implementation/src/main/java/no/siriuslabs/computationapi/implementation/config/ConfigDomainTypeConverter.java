@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Spring converter class used to parse string representations of enum class and element in the config file and convert them into the correct enum element of the right class.<p>
+ * The format of the string representation is expected to be: [fully qualified package and class name]:[enum element in that class]<p>
+ * If a non enum implementation of DomainType is made, this converter should be extended or replaced.
+ */
 @Component
 @ConfigurationPropertiesBinding
 public class ConfigDomainTypeConverter implements Converter<String, DomainType> {

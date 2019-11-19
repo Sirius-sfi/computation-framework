@@ -129,7 +129,7 @@ public class DemoController extends AbstractImplementationController implements 
 		List<WorkPackage> results = new ArrayList<>(calc.size());
 
 		for(Map<String, Object> calcEntry : calc) {
-			WorkPackage wp = new WorkPackage(request.getDomain(), getNextId());
+			WorkPackage wp = new WorkPackage(request.getDomain(), getNextWorkPackageId());
 			wp.setData(calcEntry);
 
 			results.add(wp);
