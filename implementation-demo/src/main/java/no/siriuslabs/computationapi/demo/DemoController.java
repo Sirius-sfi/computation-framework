@@ -25,6 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Rest controller implementation for the DEmo application.<p>
+ * This contains the domain specific worker node API implementation required for ImplementationControllers for the Demo domain.<p>
+ * The Demo application accepts data to "calculate" as amounts that are multiplied with a multiplier to illustrate how the system handles variable data packages.
+ */
 @RestController
 public class DemoController extends AbstractImplementationController implements ImplementationController {
 
@@ -45,6 +50,9 @@ public class DemoController extends AbstractImplementationController implements 
 	public static final String AVG_MULTIPLIER_KEY = "avgMultiplier";
 	public static final String AVG_RESULT_KEY = "avgResult";
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public DemoController(ConfigProperties configProperties) {
 		super(configProperties);
@@ -52,6 +60,12 @@ public class DemoController extends AbstractImplementationController implements 
 
 	// TODO receive ping
 
+	/**
+	 * Implements the data validation step of the Demo application.<p>
+	 * The method checks if some required values are present in the Payload coming through the webservice, so that the demo calculations can be made.
+	 * It also checks if a property referred to by the constant VALID_KEY is present and if so, if the value is true. This is just used for demo purposes.
+	 * @return A list of error messages or an empty list if no errors were found.
+	 */
 	@PostMapping("/validateData")
 	public ResponseEntity<List<String>> validateData(@RequestBody Payload payload) {
 		LOGGER.info("Received data package for validation: {}", payload);
@@ -77,6 +91,9 @@ public class DemoController extends AbstractImplementationController implements 
 		return ResponseEntity.ok(messages);
 	}
 
+	/**
+	 * Validates each of the given fieldNamesToValidate in the given data structure map. If the validation is not successful, if adds the resulting error message to the given list messages.
+	 */
 	private void validateFields(Map<String, Object> map, List<String> messages, Collection<String> fieldNamesToValidate) {
 		for(String key : fieldNamesToValidate) {
 			String message = validate(key, map.get(key));
@@ -86,6 +103,10 @@ public class DemoController extends AbstractImplementationController implements 
 		}
 	}
 
+	/**
+	 * Validates a given key-value-pair. Validation logic is independently implemented per key.
+	 * If the validation is not successful, it returns an error message otherwise and empty String.
+	 */
 	protected String validate(String key, Object value) {
 		if(VALID_KEY.equals(key)) {
 			if(!Boolean.TRUE.equals(Boolean.parseBoolean((String) value))) {
@@ -111,6 +132,11 @@ public class DemoController extends AbstractImplementationController implements 
 		return "";
 	}
 
+	/**
+	 * Implements the data preparation and WorkPackage generation step of the Demo application.<p>
+	 * This method creates a WorkPackage for every amount-multiplier pair found in the calc data structure. To simulate a more complex process, it waits some time until the result is returned.
+	 * @return The list of WorkPackages generated from the data in the ComputationRequest.
+	 */
 	@PostMapping("/prepareAndPackageData")
 	public ResponseEntity<List<WorkPackage>> prepareAndPackageData(@RequestBody ComputationRequest request) {
 		LOGGER.info("Received data package for preparation: {}", request);
@@ -139,6 +165,11 @@ public class DemoController extends AbstractImplementationController implements 
 		return ResponseEntity.ok(results);
 	}
 
+	/**
+	 * Implements the computation step of the Demo application.<p>
+	 * For demo purposes the method calculates the result of the amount and multiplier values found in the given WorkPackage. To simulate a more complex process, it waits some time until the result is returned.
+	 * @return A WorkPackageResult containing the resulting value of the multiplication.
+	 */
 	@PostMapping("/runComputation")
 	public ResponseEntity<WorkPackageResult> runComputation(@RequestBody WorkPackage workPackage) {
 		LOGGER.info("Received data package for computation: {}", workPackage);
@@ -167,6 +198,12 @@ public class DemoController extends AbstractImplementationController implements 
 		return ResponseEntity.ok(result);
 	}
 
+	/**
+	 * Implements the results accumulation of the Demo application.<p>
+	 * The method inspects all WorkPackageResults of the computation run and calculates average values for amount, multiplier and calculation result for demo purposes.
+	 * It also adds statistical information about the computation run (provided by AbstractImplementationController).
+	 * @return ComputationResult containing calculated values and statistics.
+	 */
 	@PostMapping("/accumulateResults")
 	public ResponseEntity<ComputationResult> accumulateResults(@RequestBody ResultsProtocol protocol) {
 		LOGGER.info("Calculating averages from {} results", protocol.getWorkPackageResults().size());

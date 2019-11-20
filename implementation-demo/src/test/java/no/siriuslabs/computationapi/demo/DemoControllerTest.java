@@ -1,7 +1,6 @@
 package no.siriuslabs.computationapi.demo;
 
 import no.siriuslabs.computationapi.implementation.config.ConfigProperties;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -9,8 +8,11 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Set of tests for the Demo application's Rest controller.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
 public class DemoControllerTest {
@@ -21,6 +23,9 @@ public class DemoControllerTest {
 	@InjectMocks
 	private DemoController controller;
 
+	/**
+	 * Tests the validation step of the Demo implementation.
+	 */
 	@DisplayName("Test validation of the demo implementation")
 	@Test
 	public void testValidate() {
