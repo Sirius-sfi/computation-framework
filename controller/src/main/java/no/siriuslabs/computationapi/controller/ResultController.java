@@ -33,17 +33,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Rest controller responsible for keeping track of computation status and results and accumulating them in the end.<p>
+ * This controller is listener to several types of events publishing the progress of a computation run and/or the conclusion of steps in the process.
+ */
 @RestController
 public class ResultController extends AbstractController implements ApplicationListener<AbstractDataWorkflowEvent> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
 
+	/**
+	 * Part of a worker node URL used to call that node's accumulateResults-service.
+	 */
 	private static final String ACCUMULATE_RESULTS_PATH = "/accumulateResults";
 
+	/**
+	 * Spring RestTemplate used to call worker node services.
+	 */
 	private final RestTemplate restTemplate;
 
+	/**
+	 * Protocol of everything that happened so far in a computation run. Can keep track of several runs, as long as their DomainType is different.
+	 */
 	private Map<DomainType, RequestProtocol> protocolMap = new ConcurrentHashMap<>();
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public ResultController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties/*, RestTemplate restTemplate*/) {
 		super(nodeRegistry, controllerProperties);
@@ -51,6 +67,10 @@ public class ResultController extends AbstractController implements ApplicationL
 		this.restTemplate = new RestTemplate();
 	}
 
+	/**
+	 * Implementation of ApplicationListener to keep track of different application events reporting the progress of a computation run and/or the conclusion of single steps in the process.<p>
+	 * Different event classes are used here, depending on the application phase the event belongs to.
+	 */
 	@Override
 	public void onApplicationEvent(AbstractDataWorkflowEvent workflowEvent) {
 		LOGGER.info("Event coming in");
@@ -84,6 +104,15 @@ public class ResultController extends AbstractController implements ApplicationL
 		}
 	}
 
+	/**
+	 * Returns a ComputationStatus object depicting the current status of the computation of the given domain.<p>
+	 * The returned object contains three-part information:
+	 * <ul>
+	 *     <li>The computation status - UNKNOWN (nothing found for this domain), PENDING (found but no WorkPackages present yet), WORKING (WorkPackages found) and DONE (finished, results not collected)</li>
+	 *     <li>Percentage of WorkPackages done</li>
+	 *     <li>Number of WorkPackages still to do (without results)</li>
+	 * </ul>
+	 */
 	@GetMapping("/status/{domain}")
 	public ComputationStatus getStatus(@PathVariable("domain") String domain) {
 		final String methodName = "getStatus";
@@ -131,6 +160,12 @@ public class ResultController extends AbstractController implements ApplicationL
 		return result;
 	}
 
+	/**
+	 * Triggers the domain specific accumulation of the collected results on a worker node.<p>
+	 * Returns ResponseEntity containing general statistical data about the computation run and a domain specific result if successful or an error or a negative
+	 * reply if there are no results (yet) or something went wrong.<p>
+	 * After results have been found and reported back successfully they will be removed the controller and this DomainType is applicable to be used in a further computation run again.
+	 */
 	@GetMapping("/result/{domain}")
 	public ResponseEntity<Object> getResult(@PathVariable("domain") String domain) throws URISyntaxException {
 		final String methodName = "getResult";
@@ -189,6 +224,9 @@ public class ResultController extends AbstractController implements ApplicationL
 		return ResponseEntity.status(HttpStatus.OK).body(result);
 	}
 
+	/**
+	 * Prepares and adds all available statistical and timing data in the given RequestProtocol to the given ResultsProtocol.
+	 */
 	private void addTimingData(RequestProtocol protocol, ResultsProtocol resultsProtocol) {
 		resultsProtocol.setStartedTimestamp(protocol.getComputationRequest().getStartedTimestamp());
 		resultsProtocol.setPreparationTime(protocol.getComputationRequest().getPreparationTime());

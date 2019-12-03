@@ -16,16 +16,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Rest controller responsible for worker node and domain type related services.<p>
+ * It offers several service methods that provide information about the registered nodes and the active domain of the controller.
+ * It also has two crucial service methods for registering and unregistering worker nodes with the controller.
+ */
 @RestController
 public class NodeController extends AbstractController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NodeController.class);
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public NodeController(NodeRegistry nodeRegistry, ControllerProperties controllerProperties) {
 		super(nodeRegistry, controllerProperties);
 	}
 
+	/**
+	 * Returns the number of worker nodes of any domain type currently registered with the controller.
+	 */
 	@GetMapping("/numberOfNodes")
 	public int getNumberOfNodes() {
 		final String methodName = "getNumberOfNodes";
@@ -37,6 +48,9 @@ public class NodeController extends AbstractController {
 		return result;
 	}
 
+	/**
+	 * Returns a String with a list of all worker nodes of any domain type currently registered with the controller.
+	 */
 	@GetMapping("/getNodeList")
 	public String getNodeList() {
 		final String methodName = "getNodeList";
@@ -48,6 +62,14 @@ public class NodeController extends AbstractController {
 		return result;
 	}
 
+	/**
+	 * Registers the given WorkerNode as an available node with the controller. After registration the node is eligible to receive tasks to execute.<p>
+	 * Should this node or a node carrying the same node ID already be registered, the node will <b>not</b> be registered and this method will return HttpStatus 406 - "Not acceptable".
+	 * On successful registration it will return the node itself.<p>
+	 * If there should not yet be an active DomainType set for the controller, this node's DomainType will become the active one on registration.<p>
+	 * Should this node's DomainType not match the already set type of the controller, an error will be thrown.
+	 */
+	// TODO softer reaction to wrong DomainType?
 	@PostMapping("/registerNode")
 	public ResponseEntity<Object> registerNode(@RequestBody WorkerNode node) {
 		final String methodName = "registerNode";
@@ -67,6 +89,11 @@ public class NodeController extends AbstractController {
 		return ResponseEntity.ok(node);
 	}
 
+	/**
+	 * Unregisters the WorkerNode with the given ID from the controller. The node will not be given any new tasks after de-registration.<p>
+	 * Should the node deliver a result after being unregistered, the result will be accepted anyway. If the node shuts down before a result is delivered, the work will be reassigned later.<p>
+	 * Should the given node ID not belong to a registered node an error will be thrown.
+	 */
 	@PostMapping("/unregisterNode/{id}")
 	public void unregisterNode(@PathVariable String id) {
 		final String methodName = "unregisterNode";
@@ -81,6 +108,9 @@ public class NodeController extends AbstractController {
 		logVoidRequestFinish(LOGGER, methodName, id);
 	}
 
+	/**
+	 * Returns the currently active domain type on the controller. If there is no active domain type, the result will be empty.
+	 */
 	@GetMapping("activeDomain")
 	public String getActiveDomain() {
 		final String methodName = "getNodeList";
@@ -93,10 +123,17 @@ public class NodeController extends AbstractController {
 		return result;
 	}
 
+	/**
+	 * Sets the active domain type to the given one.
+	 */
+	// TODO add additional check if DomainType is already set?
 	public void setDomain(DomainType domain) {
 		getNodeRegistry().setDomain(domain);
 	}
 
+	/**
+	 * Triggers pinging of all registered worker nodes.
+	 */
 	public void pingNodes() {
 		if(getNodeRegistry().hasNodes()) {
 			getNodeRegistry().pingAllNodes();

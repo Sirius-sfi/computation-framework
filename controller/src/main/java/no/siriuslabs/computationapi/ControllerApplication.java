@@ -25,6 +25,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Controller Spring application.<p>
+ * Executes a CommandLineRunner at start-up which sets-up timers to distribute tasks to registered worker nodes and execute regular pings to worker nodes.
+ */
 @SpringBootApplication
 @ComponentScan(basePackages = {"no.siriuslabs.computationapi", "no.siriuslabs.computationapi.api"})
 @EnableAsync
@@ -38,10 +42,17 @@ public class ControllerApplication {
 	private final WorkPackageController workPackageController;
 	private final NodeController nodeController;
 
+	/**
+	 * Main method.<p>
+	 * Possible program arguments: Name of DomainType the controller should be restricted to (optional)
+	 */
 	public static void main(String[] args) {
 		SpringApplication.run(ControllerApplication.class, args);
 	}
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public ControllerApplication(ControllerProperties controllerProperties, NodeController nodeController, WorkPackageController workPackageController, NodesProperties nodesProperties) {
 		this.controllerProperties = controllerProperties;
@@ -50,6 +61,9 @@ public class ControllerApplication {
 		this.nodesProperties = nodesProperties;
 	}
 
+	/**
+	 * CommandLineRunner that is executed at application startup to set the DomainType and set-up the timers.
+	 */
 	@Bean
 	@Profile("!test")
 	public CommandLineRunner run() {
@@ -70,6 +84,9 @@ public class ControllerApplication {
 		};
 	}
 
+	/**
+	 * Creates, configures and starts the ping timer.
+	 */
 	private void setupPingTimer() {
 		TimerTask timerTask = new TimerTask() {
 			@Override
@@ -88,6 +105,9 @@ public class ControllerApplication {
 		setupTimer("ping timer", timerTask, startupDelay, callInterval);
 	}
 
+	/**
+	 * Creates, configures and starts the work distribution timer.
+	 */
 	private void setupWorkDistributionTimer() {
 		TimerTask timerTask = new TimerTask() {
 			@Override
@@ -107,6 +127,13 @@ public class ControllerApplication {
 		ScheduledFuture<?> future = executor.scheduleAtFixedRate(timerTask, startupDelay, callInterval, TimeUnit.MILLISECONDS);
 	}
 
+	/**
+	 * Creates and configures a Timer.
+	 * @param name         	Name of the Timer.
+	 * @param timerTask     TimerTask the Timer should be scheduled to.
+	 * @param startupDelay	Delay between creation and first invocation.
+	 * @param callInterval	Interval between two timer calls.
+	 */
 	private void setupTimer(String name, TimerTask timerTask, long startupDelay, long callInterval) {
 		Timer timer = new Timer(name);
 		timer.schedule(timerTask, startupDelay, callInterval);

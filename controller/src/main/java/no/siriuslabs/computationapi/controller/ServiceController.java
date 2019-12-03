@@ -25,6 +25,9 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Rest controller responsible for accepting, validating and starting computation requests. It exposes a single service method to accept requests and start the process.
+ */
 @RestController
 public class ServiceController extends AbstractController {
 
@@ -35,10 +38,22 @@ public class ServiceController extends AbstractController {
 	public static final String DATA_VALIDATION_FAILED_MSG = "Data validation failed: ";
 	public static final String VALIDATE_DATA_PATH = "/validateData";
 
+	/**
+	 * DataPreparationService instance to trigger work package generation.
+	 */
 	private final DataPreparationService dataPreparationService;
+	/**
+	 * Spring RestTemplate used to call worker node services.
+	 */
 	private final RestTemplate restTemplate;
+	/**
+	 * Event publisher to pass updates to other controllers.
+	 */
 	private final ApplicationEventPublisher applicationEventPublisher;
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public ServiceController(NodeRegistry nodeRegistry, DataPreparationService dataPreparationService, ControllerProperties controllerProperties, RestTemplate restTemplate, ApplicationEventPublisher applicationEventPublisher) {
 		super(nodeRegistry, controllerProperties);
@@ -47,6 +62,12 @@ public class ServiceController extends AbstractController {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
+	/**
+	 * Accepts data to start a computation run. The contents of the ComputationRequest must fit the domain specific needs.<p>
+	 * The first steps of the computation run are executed in this method in a synchronous way: validation of the data and generation of work packages from the data.
+	 * If both steps are successful, the finishes and the following steps are executed asynchronously over time.
+	 * If not successful, the method will return a text description of the cause of the problem (e.g. why validation failed).
+	 */
 	@PostMapping("/startComputation")
 	public ResponseEntity<Object> startComputation(@RequestBody ComputationRequest request) throws URISyntaxException, ExecutionException {
 		final String methodName = "startComputation";
@@ -91,6 +112,13 @@ public class ServiceController extends AbstractController {
 		return response;
 	}
 
+	/**
+	 * Sends the data from the ComputationRequest's Payload to a worker node for domain specific validation.<p>
+	 * Returns a Spring ResponseEntity to be returned to the caller if the validation process was <b>not</b> successful.
+	 * The reasons for failure can be a non-OK HttpStatus code, no validation result returned or validation errors in the data.
+	 * The method will produce HttpStatus 406 ("Not Acceptable") responses with text explanations in theses cases.<p>
+	 * If the validation succeeded it will return just null.
+	 */
 	protected ResponseEntity<Object> validateData(String nodeId, Payload payload) throws URISyntaxException {
 		LOGGER.info("Validating data - using node {}; data package = {}", nodeId, payload);
 

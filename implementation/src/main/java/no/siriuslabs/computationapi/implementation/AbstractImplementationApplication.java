@@ -246,7 +246,7 @@ public abstract class AbstractImplementationApplication {
 	}
 
 	/**
-	 * Waits for an amount of time speccified in the config file and then returns.
+	 * Waits for an amount of time specified in the config file and then returns.
 	 */
 	private void waitForRetry() {
 		try {

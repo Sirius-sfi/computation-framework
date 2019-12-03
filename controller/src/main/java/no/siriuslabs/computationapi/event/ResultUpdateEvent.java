@@ -4,12 +4,20 @@ import no.siriuslabs.computationapi.api.model.computation.WorkPackageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Event based on AbstractDataWorkflowEvent that can be fired when the computation of a WorkPackage has finished.
+ * The event carries the WorkPackageResult for that WorkPackage.
+ */
 public class ResultUpdateEvent extends AbstractDataWorkflowEvent {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ResultUpdateEvent.class);
-
+	/**
+	 * WorkPackageResult that was created when the computation finished.
+	 */
 	private final WorkPackageResult workPackageResult;
 
+	/**
+	 * Constructor accepting the event's source and the WorkPackageResult.
+	 */
 	public ResultUpdateEvent(Object source, WorkPackageResult workPackageResult) {
 		super(source);
 		this.workPackageResult = workPackageResult;

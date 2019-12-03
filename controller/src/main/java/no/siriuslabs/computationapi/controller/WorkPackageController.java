@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -26,17 +25,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+/**
+ * Rest controller responsible for keeping track of the work packages still to run and for distributing the work to different nodes.
+ */
+// TODO technically not a Rest controller anymore since it lost domain information --> rename/remove annotation/move?
 @RestController
 public class WorkPackageController extends AbstractController implements ApplicationListener<AbstractDataWorkflowEvent> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkPackageController.class);
 
+	/**
+	 * ComputationJobService that runs the asynchronous computations.
+	 */
 	private final ComputationJobService computationJobService;
+	/**
+	 * Reference to ResultController to get information about results and overall status.
+	 */
 	private final ResultController resultController;
 
+	/**
+	 * Map that keeps all WorkPackages ordered by DomainType.
+	 */
 	private final ConcurrentHashMap<DomainType, ConcurrentLinkedQueue<WorkPackage>> workToDo;
+	/**
+	 * Map that keeps a register of which WorkPackage currently runs on which node.
+	 */
 	private final ConcurrentHashMap<Long, Pair<WorkPackage, String>> runningWorkPackages;
 
+	/**
+	 * Autowired constructor.
+	 */
 	@Autowired
 	public WorkPackageController(NodeRegistry nodeRegistry, ComputationJobService computationJobService, ControllerProperties controllerProperties, ResultController resultController) {
 		super(nodeRegistry, controllerProperties);
@@ -46,6 +64,10 @@ public class WorkPackageController extends AbstractController implements Applica
 		runningWorkPackages = new ConcurrentHashMap<>();
 	}
 
+	/**
+	 * Implementation of ApplicationListener to keep track of different application events reporting the completion of the preparation phase or a computation finishing for a WorkPackage.
+	 * Different event classes are used here, depending on the application phase the event belongs to.
+	 */
 	@Override
 	public void onApplicationEvent(AbstractDataWorkflowEvent event) {
 		if(event instanceof DataPreparartionFinishedEvent) {
@@ -73,6 +95,9 @@ public class WorkPackageController extends AbstractController implements Applica
 		}
 	}
 
+	/**
+	 * Triggers distribution of work packages to all idle nodes that have a matching DomainType. Called from a timer regularly.
+	 */
 	public void distributeWork() {
 		final String methodName = "distributeWork";
 		logRequestStart(LOGGER, methodName);
@@ -106,6 +131,10 @@ public class WorkPackageController extends AbstractController implements Applica
 		}
 	}
 
+	/**
+	 * Method that tries to find WorkPackages that were given to a node to be computed but have never reported a result.<p>
+	 * If such a WorkPackage is identified, it will be re-added to the queue.
+	 */
 	private void handleLostPackages() {
 		final DomainType domain = getNodeRegistry().getDomain();
 		RequestProtocol protocol = resultController.getProtocolForDomain(domain);
@@ -138,6 +167,10 @@ public class WorkPackageController extends AbstractController implements Applica
 		}
 	}
 
+	/**
+	 * Filters WorkPackages from the lost-package-candidates in the given list of packagesToDo that are found not to be lost, because they already have a result in
+	 * the RequestProtocol or are currently running on a node that is known to be alive.
+	 */
 	private void filterOutValidEntries(RequestProtocol protocol, List<WorkPackage> packagesToDo) {
 		List<WorkPackage> packagesWithResult = protocol.getWorkPackageResults().stream().map(WorkPackageResult::getWorkPackage).collect(Collectors.toCollection(() -> new ArrayList<>(protocol.getWorkPackageResults().size())));
 
@@ -145,12 +178,16 @@ public class WorkPackageController extends AbstractController implements Applica
 			packagesToDo.remove(w);
 		}
 		for(Pair<WorkPackage, String> p : runningWorkPackages.values()) {
-			if(getNodeRegistry().hasNode(p.getY())) {
+			if(getNodeRegistry().hasNode(p.getY())) { // TODO also include ping status here later
 				packagesToDo.remove(p.getX());
 			}
 		}
 	}
 
+	/**
+	 * Distributes WorkPackages to worker nodes with a matching DomainType as long as there are some in the given queue and as long as nodes can be reserved for that task.
+	 * Each WorkPackage is assigned to a node and run by an asynchronous service then.
+	 */
 	private void distributeWorkToNodes(ConcurrentLinkedQueue<WorkPackage> queue) throws URISyntaxException {
 		while(true) {
 			String nodeId = getNodeRegistry().reserveNode(getNodeRegistry().getDomain());
