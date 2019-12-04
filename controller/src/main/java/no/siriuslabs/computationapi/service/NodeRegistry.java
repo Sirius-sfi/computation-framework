@@ -200,6 +200,10 @@ public class NodeRegistry {
 		LOGGER.info("Node {} status changed to {}", node.getId(), node.getStatus());
 	}
 
+	public boolean hasDomainSet() {
+		return getDomain() != null;
+	}
+
 	/**
 	 * Returns the currently active DomainType in the system or null if there is no active domain set yet.
 	 */
@@ -208,11 +212,18 @@ public class NodeRegistry {
 	}
 
 	/**
-	 * Set the system's currently active DomainType to the given one.
+	 * Set the system's currently active DomainType to the given one.<p>
+	 * Throws an IllegalStateException if an already set active DomainType would be overwritten by the new one.
 	 */
-	// TODO check for overwrites!?
 	public synchronized void setDomain(DomainType domain) {
-		this.domain = domain;
+		if(getDomain() == null) {
+			LOGGER.info("Setting active domain to {}", domain);
+			this.domain = domain;
+		}
+		else {
+			LOGGER.info("Active domain already set to {}", domain);
+			throw new IllegalStateException("Active domain already set to " + domain + ". May be set only once.");
+		}
 	}
 
 	/**

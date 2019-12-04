@@ -81,7 +81,7 @@ public class NodeController extends AbstractController {
 			return response;
 		}
 
-		if(!getNodeRegistry().getDomain().getDomainType().equals(node.getDomainType().getDomainType())) {
+		if(getNodeRegistry().hasDomainSet() && !getNodeRegistry().getDomain().getDomainType().equals(node.getDomainType().getDomainType())) {
 			final String message = "Node " + node.getId() + " has set a domain type different from the controller (" + node.getDomainType() + " <> " + getNodeRegistry().getDomain().getDomainType() + ')';
 			LOGGER.info(message);
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(message);
@@ -131,9 +131,9 @@ public class NodeController extends AbstractController {
 	}
 
 	/**
-	 * Sets the active domain type to the given one.
+	 * Sets the active domain type to the given one.<p>
+	 * Throws an IllegalStateException if an already set active DomainType would be overwritten by the new one.
 	 */
-	// TODO add additional check if DomainType is already set?
 	public void setDomain(DomainType domain) {
 		getNodeRegistry().setDomain(domain);
 	}
