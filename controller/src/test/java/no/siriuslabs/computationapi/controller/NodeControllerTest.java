@@ -2,6 +2,7 @@ package no.siriuslabs.computationapi.controller;
 
 import no.siriuslabs.computationapi.api.exception.InvalidParameterException;
 import no.siriuslabs.computationapi.api.model.node.WorkerNode;
+import no.siriuslabs.computationapi.model.TestDomainType;
 import no.siriuslabs.computationapi.service.NodeRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,12 +45,15 @@ public class NodeControllerTest {
 	public void testRegisterNode() {
 		WorkerNode existingNode = new WorkerNode();
 		existingNode.setId(EXISTING_NODE_ID);
+		existingNode.setDomainType(TestDomainType.TEST_1);
 
 		WorkerNode newNode = new WorkerNode();
+		newNode.setDomainType(TestDomainType.TEST_1);
 		existingNode.setId(NEW_NODE_ID);
 
 		Mockito.when(nodeRegistry.hasNode(existingNode)).thenReturn(true);
 		Mockito.when(nodeRegistry.hasNode(newNode)).thenReturn(false);
+		Mockito.when(nodeRegistry.getDomain()).thenReturn(TestDomainType.TEST_1);
 
 		// test with already registered node
 		ResponseEntity<Object> response = nodeController.registerNode(existingNode);

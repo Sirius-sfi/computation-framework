@@ -67,9 +67,8 @@ public class NodeController extends AbstractController {
 	 * Should this node or a node carrying the same node ID already be registered, the node will <b>not</b> be registered and this method will return HttpStatus 406 - "Not acceptable".
 	 * On successful registration it will return the node itself.<p>
 	 * If there should not yet be an active DomainType set for the controller, this node's DomainType will become the active one on registration.<p>
-	 * Should this node's DomainType not match the already set type of the controller, an error will be thrown.
+	 * Should this node's DomainType not match the already set type of the controller, the node will not be registered and the method will return HttpStatus 406 - "Not acceptable" with an appropriate message.
 	 */
-	// TODO softer reaction to wrong DomainType?
 	@PostMapping("/registerNode")
 	public ResponseEntity<Object> registerNode(@RequestBody WorkerNode node) {
 		final String methodName = "registerNode";
@@ -78,6 +77,14 @@ public class NodeController extends AbstractController {
 		if(getNodeRegistry().hasNode(node)) {
 			LOGGER.info("Node with ID {} already registered", node.getId());
 			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Node with id " + node.getId() + " already registered");
+			logRequestFinish(LOGGER, methodName, response, node);
+			return response;
+		}
+
+		if(!getNodeRegistry().getDomain().getDomainType().equals(node.getDomainType().getDomainType())) {
+			final String message = "Node " + node.getId() + " has set a domain type different from the controller (" + node.getDomainType() + " <> " + getNodeRegistry().getDomain().getDomainType() + ')';
+			LOGGER.info(message);
+			final ResponseEntity<Object> response = ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(message);
 			logRequestFinish(LOGGER, methodName, response, node);
 			return response;
 		}
